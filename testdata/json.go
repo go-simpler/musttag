@@ -5,46 +5,92 @@ import (
 )
 
 func MarshalJSON() {
-	type X struct{ NoTag int } // want `exported fields should be annotated with the "json" tag`
-
-	var x X
-	json.Marshal(x)
-	json.Marshal(&x)
-	json.Marshal(X{})
-	json.Marshal(&X{})
-
-	var y struct{ NoTag int } // want `exported fields should be annotated with the "json" tag`
-	json.Marshal(y)
-	json.Marshal(&y)
-
-	json.Marshal(struct{ NoTag int }{})  // want `exported fields should be annotated with the "json" tag`
-	json.Marshal(&struct{ NoTag int }{}) // want `exported fields should be annotated with the "json" tag`
-
-	json.MarshalIndent(struct{ NoTag int }{}, "", "")  // want `exported fields should be annotated with the "json" tag`
-	json.NewEncoder(nil).Encode(struct{ NoTag int }{}) // want `exported fields should be annotated with the "json" tag`
-
-	json.Marshal(0)
-	json.Marshal("")
-	json.Marshal(nil)
+	{
+		// named type
+		type X struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		var x X
+		json.Marshal(x)
+	}
+	{
+		// named type + pointer
+		type X struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		var x X
+		json.Marshal(&x)
+	}
+	{
+		// named type + in-place declaration
+		type X struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.Marshal(X{})
+	}
+	{
+		// named type + in-place declaration + pointer
+		type X struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.Marshal(&X{})
+	}
+	{
+		// anonymous type
+		var x struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.Marshal(x)
+	}
+	{
+		// anonymous type + pointer
+		var x struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.Marshal(&x)
+	}
+	{
+		// anonymous type + in-place declaration
+		json.Marshal(struct{ Y int }{}) // want `exported fields should be annotated with the "json" tag`
+	}
+	{
+		// anonymous type + in-place declaration + pointer
+		json.Marshal(&struct{ Y int }{}) // want `exported fields should be annotated with the "json" tag`
+	}
+	{
+		// marshal indent
+		var x struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.MarshalIndent(x, "", "")
+	}
+	{
+		// new encoder
+		var x struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.NewEncoder(nil).Encode(x)
+	}
+	{
+		// non-struct argument
+		json.Marshal(0)
+		json.Marshal(nil)
+	}
 }
 
 func UnmarshalJSON() {
-	empty := []byte("{}")
-
-	type X struct{ NoTag int } // want `exported fields should be annotated with the "json" tag`
-
-	var x X
-	json.Unmarshal(empty, &x)
-	json.Unmarshal(empty, &X{})
-
-	var y struct{ NoTag int } // want `exported fields should be annotated with the "json" tag`
-	json.Unmarshal(empty, &y)
-
-	json.Unmarshal(empty, &struct{ NoTag int }{}) // want `exported fields should be annotated with the "json" tag`
-
-	json.NewDecoder(nil).Decode(&struct{ NoTag int }{}) // want `exported fields should be annotated with the "json" tag`
-
-	json.Unmarshal(empty, &[]int{})
-	json.Unmarshal(empty, &map[int]int{})
-	json.Unmarshal(empty, nil)
+	{
+		// named type
+		type X struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		var x X
+		json.Unmarshal(nil, &x)
+	}
+	{
+		// named type + in-place declaration
+		type X struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.Unmarshal(nil, &X{})
+	}
+	{
+		// anonymous type
+		var x struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.Unmarshal(nil, &x)
+	}
+	{
+		// anonymous type + in-place declaration
+		json.Unmarshal(nil, &struct{ Y int }{}) // want `exported fields should be annotated with the "json" tag`
+	}
+	{
+		// new decoder
+		var x struct{ Y int } // want `exported fields should be annotated with the "json" tag`
+		json.NewDecoder(nil).Decode(&x)
+	}
+	{
+		// non-struct argument
+		json.Unmarshal(nil, &[]int{})
+		json.Unmarshal(nil, nil)
+	}
 }
