@@ -56,6 +56,22 @@ func MarshalJSON() {
 		json.NewEncoder(nil).Encode(x)
 	}
 	{
+		// anonymous nested struct
+		var x struct { // want `exported fields should be annotated with the "json" tag`
+			Y struct{ Z int } `json:"Y"`
+		}
+		json.Marshal(x)
+	}
+	{
+		// nested struct of a named type
+		type Y struct{ Z int } // want `exported fields should be annotated with the "json" tag`
+		type X struct {
+			Y Y `json:"y"`
+		}
+		var x X
+		json.Marshal(x)
+	}
+	{
 		// non-struct argument
 		json.Marshal(0)
 		json.Marshal(nil)
@@ -87,6 +103,22 @@ func UnmarshalJSON() {
 		// new decoder
 		var x struct{ Y int } // want `exported fields should be annotated with the "json" tag`
 		json.NewDecoder(nil).Decode(&x)
+	}
+	{
+		// anonymous nested struct
+		var x struct { // want `exported fields should be annotated with the "json" tag`
+			Y struct{ Z int } `json:"Y"`
+		}
+		json.Unmarshal(nil, &x)
+	}
+	{
+		// nested struct of a named type
+		type Y struct{ Z int } // want `exported fields should be annotated with the "json" tag`
+		type X struct {
+			Y Y `json:"y"`
+		}
+		var x X
+		json.Unmarshal(nil, &x)
 	}
 	{
 		// non-struct argument

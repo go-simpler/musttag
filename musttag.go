@@ -46,7 +46,7 @@ func run(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		if ok := checkStruct(s, tag); ok {
+		if ok := checkStruct(s, tag, &pos); ok {
 			return
 		}
 
@@ -86,7 +86,7 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 }
 
 // structAndPos analyses the given expression and returns the struct to check
-// and the position to write a report if needed.
+// and the position to report if needed.
 func structAndPos(pass *analysis.Pass, expr ast.Expr) (*types.Struct, token.Pos, bool) {
 	t := pass.TypesInfo.TypeOf(expr)
 	if ptr, ok := t.(*types.Pointer); ok {
@@ -117,13 +117,14 @@ func structAndPos(pass *analysis.Pass, expr ast.Expr) (*types.Struct, token.Pos,
 }
 
 // checkStruct checks that exported fields of the given struct are annotated
-// with the tag.
-// TODO(junk1tm): traverse the struct recursively
-func checkStruct(s *types.Struct, tag string) (ok bool) {
+// with the tag and updates the position to report in case a nested struct of a
+// named type is found.
+func checkStruct(s *types.Struct, tag string, pos *token.Pos) (ok bool) {
 	for i := 0; i < s.NumFields(); i++ {
 		if !s.Field(i).Exported() {
 			continue
 		}
+
 		tagged := false
 		for _, t := range strings.Split(s.Tag(i), " ") {
 			// from the [reflect.StructTag] docs:
@@ -136,6 +137,25 @@ func checkStruct(s *types.Struct, tag string) (ok bool) {
 		if !tagged {
 			return false
 		}
+
+		// check if the field is a nested struct.
+		t := s.Field(i).Type()
+		if ptr, ok := t.(*types.Pointer); ok {
+			t = ptr.Elem()
+		}
+		nested, ok := t.Underlying().(*types.Struct)
+		if !ok {
+			continue
+		}
+		if ok := checkStruct(nested, tag, pos); ok {
+			continue
+		}
+		// update the position to point to the named type.
+		if named, ok := t.(*types.Named); ok {
+			*pos = named.Obj().Pos()
+		}
+		return false
 	}
+
 	return true
 }
