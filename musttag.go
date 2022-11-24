@@ -19,6 +19,18 @@ var Analyzer = &analysis.Analyzer{
 	Run:      run,
 }
 
+// for tests only.
+var (
+	// should the same struct be reported only once for the same tag?
+	reportOnce = true
+
+	// reportf is a wrapper for pass.Reportf (as a variable, so it could be mocked in tests).
+	reportf = func(pass *analysis.Pass, call *ast.CallExpr, pos token.Pos, tag string) {
+		pass.Reportf(pos, "exported fields should be annotated with the %q tag", tag)
+	}
+)
+
+// run starts the analysis.
 func run(pass *analysis.Pass) (any, error) {
 	inspect := pass.ResultOf[inspectpass.Analyzer].(*inspector.Inspector)
 
@@ -26,7 +38,6 @@ func run(pass *analysis.Pass) (any, error) {
 		(*ast.CallExpr)(nil),
 	}
 
-	// do not report the same struct more than once.
 	type report struct {
 		pos token.Pos
 		tag string
@@ -51,10 +62,12 @@ func run(pass *analysis.Pass) (any, error) {
 		}
 
 		r := report{pos, tag}
-		if _, ok := reported[r]; !ok {
-			reported[r] = struct{}{}
-			pass.Reportf(pos, "exported fields should be annotated with the %q tag", tag)
+		if _, ok := reported[r]; ok && reportOnce {
+			return
 		}
+
+		reportf(pass, call, pos, tag)
+		reported[r] = struct{}{}
 	})
 
 	return nil, nil
