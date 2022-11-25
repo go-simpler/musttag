@@ -78,6 +78,7 @@ func run(pass *analysis.Pass) (any, error) {
 func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool) {
 	const (
 		jsonTag = "json"
+		xmlTag  = "xml"
 	)
 
 	fn := typeutil.StaticCallee(pass.TypesInfo, call)
@@ -93,6 +94,15 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 		return jsonTag, call.Args[0], true
 	case "encoding/json.Unmarshal":
 		return jsonTag, call.Args[1], true
+	case "encoding/xml.Marshal",
+		"encoding/xml.MarshalIndent",
+		"(*encoding/xml.Encoder).Encode",
+		"(*encoding/xml.Decoder).Decode",
+		"(*encoding/xml.Encoder).EncodeElement",
+		"(*encoding/xml.Decoder).DecodeElement":
+		return xmlTag, call.Args[0], true
+	case "encoding/xml.Unmarshal":
+		return xmlTag, call.Args[1], true
 	default:
 		return "", nil, false
 	}
