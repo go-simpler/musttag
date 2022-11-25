@@ -1,4 +1,4 @@
-package testdata
+package tests
 
 import (
 	"encoding/json"
@@ -132,14 +132,14 @@ func nestedAnonymousType() {
 	xml.NewDecoder(nil).DecodeElement(&struct{ Y struct{ NoTag int } }{}, &xmlSE) // want `\Qxml.Decoder.DecodeElement`
 }
 
+// all good, nothing to report.
 func typeWithAllTags() {
-	type X struct {
+	var x struct {
 		Y       int      `json:"y" xml:"Y"`
 		Z       int      `json:"z" xml:"Z"`
 		Nested  struct{} `json:"nested" xml:"Nested"`
 		private int
 	}
-	var x X
 
 	json.Marshal(x)
 	json.MarshalIndent(x, "", "")
@@ -156,6 +156,20 @@ func typeWithAllTags() {
 	xml.NewDecoder(nil).DecodeElement(&x, &xmlSE)
 }
 
+// non-static calls should be ignored.
+func nonStaticCalls() {
+	var x struct {
+		NoTag int
+	}
+
+	marshalJSON := json.Marshal
+	marshalJSON(x)
+
+	marshalXML := xml.Marshal
+	marshalXML(x)
+}
+
+// non-struct argument calls should be ignored.
 func nonStructArgument() {
 	json.Marshal(0)
 	json.MarshalIndent("", "", "")
