@@ -28,11 +28,14 @@ data, err := json.Marshal(user)
 The rational from [Uber Style Guide][1]:
 
 > The serialized form of the structure is a contract between different systems.
-> Changes to the structure of the serialized form--including field names--break this contract.
+> Changes to the structure of the serialized form, including field names, break this contract.
 > Specifying field names inside tags makes the contract explicit,
 > and it guards against accidentally breaking the contract by refactoring or renaming fields.
 
-Currently `musttag` supports only the `json` tag, see [Roadmap](#-roadmap) for future plans.
+## 🚀 Features
+
+* `encoding/json` support
+* `encoding/xml` support
 
 ## 📦 Install
 
@@ -50,7 +53,6 @@ go vet -vettool=$(which musttag) ./...
 
 ## 📅 Roadmap
 
-* Support `xml`
 * Support `yaml`
 * Support `toml`
 * Support `mapstructure`
