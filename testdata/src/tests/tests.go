@@ -3,6 +3,8 @@ package tests
 import (
 	"encoding/json"
 	"encoding/xml"
+
+	"gopkg.in/yaml.v3"
 )
 
 var xmlSE xml.StartElement
@@ -21,7 +23,12 @@ func namedType() {
 		`\Qxml.Encoder.Encode`
 		`\Qxml.Decoder.Decode`
 		`\Qxml.Encoder.EncodeElement`
-		`\Qxml.Decoder.DecodeElement` */
+		`\Qxml.Decoder.DecodeElement`
+
+		`\Qyaml.v3.Marshal`
+		`\Qyaml.v3.Unmarshal`
+		`\Qyaml.v3.Encoder.Encode`
+		`\Qyaml.v3.Decoder.Decode` */
 		NoTag int
 	}
 	var x X
@@ -39,6 +46,11 @@ func namedType() {
 	xml.NewDecoder(nil).Decode(&X{})
 	xml.NewEncoder(nil).EncodeElement(X{}, xmlSE)
 	xml.NewDecoder(nil).DecodeElement(&X{}, &xmlSE)
+
+	yaml.Marshal(x)
+	yaml.Unmarshal(nil, &x)
+	yaml.NewEncoder(nil).Encode(X{})
+	yaml.NewDecoder(nil).Decode(&X{})
 }
 
 func nestedNamedType() {
@@ -55,11 +67,16 @@ func nestedNamedType() {
 		`\Qxml.Encoder.Encode`
 		`\Qxml.Decoder.Decode`
 		`\Qxml.Encoder.EncodeElement`
-		`\Qxml.Decoder.DecodeElement` */
+		`\Qxml.Decoder.DecodeElement`
+
+		`\Qyaml.v3.Marshal`
+		`\Qyaml.v3.Unmarshal`
+		`\Qyaml.v3.Encoder.Encode`
+		`\Qyaml.v3.Decoder.Decode` */
 		NoTag int
 	}
 	type X struct {
-		Y Y `json:"y" xml:"Y"`
+		Y Y `json:"y" xml:"Y" yaml:"y"`
 	}
 	var x X
 
@@ -76,6 +93,11 @@ func nestedNamedType() {
 	xml.NewDecoder(nil).Decode(&X{})
 	xml.NewEncoder(nil).EncodeElement(X{}, xmlSE)
 	xml.NewDecoder(nil).DecodeElement(&X{}, &xmlSE)
+
+	yaml.Marshal(x)
+	yaml.Unmarshal(nil, &x)
+	yaml.NewEncoder(nil).Encode(X{})
+	yaml.NewDecoder(nil).Decode(&X{})
 }
 
 func anonymousType() {
@@ -86,7 +108,10 @@ func anonymousType() {
 
 		`\Qxml.Marshal`
 		`\Qxml.MarshalIndent`
-		`\Qxml.Unmarshal` */
+		`\Qxml.Unmarshal`
+
+		`\Qyaml.v3.Marshal`
+		`\Qyaml.v3.Unmarshal` */
 		NoTag int
 	}
 
@@ -103,6 +128,11 @@ func anonymousType() {
 	xml.NewDecoder(nil).Decode(&struct{ NoTag int }{})                // want `\Qxml.Decoder.Decode`
 	xml.NewEncoder(nil).EncodeElement(struct{ NoTag int }{}, xmlSE)   // want `\Qxml.Encoder.EncodeElement`
 	xml.NewDecoder(nil).DecodeElement(&struct{ NoTag int }{}, &xmlSE) // want `\Qxml.Decoder.DecodeElement`
+
+	yaml.Marshal(x)
+	yaml.Unmarshal(nil, &x)
+	yaml.NewEncoder(nil).Encode(struct{ NoTag int }{})  // want `\Qyaml.v3.Encoder.Encode`
+	yaml.NewDecoder(nil).Decode(&struct{ NoTag int }{}) // want `\Qyaml.v3.Decoder.Decode`
 }
 
 func nestedAnonymousType() {
@@ -113,7 +143,10 @@ func nestedAnonymousType() {
 
 		`\Qxml.Marshal`
 		`\Qxml.MarshalIndent`
-		`\Qxml.Unmarshal` */
+		`\Qxml.Unmarshal`
+
+		`\Qyaml.v3.Marshal`
+		`\Qyaml.v3.Unmarshal` */
 		Y *struct{ NoTag int } `json:"y"`
 	}
 
@@ -130,14 +163,19 @@ func nestedAnonymousType() {
 	xml.NewDecoder(nil).Decode(&struct{ Y struct{ NoTag int } }{})                // want `\Qxml.Decoder.Decode`
 	xml.NewEncoder(nil).EncodeElement(struct{ Y struct{ NoTag int } }{}, xmlSE)   // want `\Qxml.Encoder.EncodeElement`
 	xml.NewDecoder(nil).DecodeElement(&struct{ Y struct{ NoTag int } }{}, &xmlSE) // want `\Qxml.Decoder.DecodeElement`
+
+	yaml.Marshal(x)
+	yaml.Unmarshal(nil, &x)
+	yaml.NewEncoder(nil).Encode(struct{ Y struct{ NoTag int } }{})  // want `\Qyaml.v3.Encoder.Encode`
+	yaml.NewDecoder(nil).Decode(&struct{ Y struct{ NoTag int } }{}) // want `\Qyaml.v3.Decoder.Decode`
 }
 
 // all good, nothing to report.
 func typeWithAllTags() {
 	var x struct {
-		Y       int      `json:"y" xml:"Y"`
-		Z       int      `json:"z" xml:"Z"`
-		Nested  struct{} `json:"nested" xml:"Nested"`
+		Y       int      `json:"y" xml:"Y" yaml:"y"`
+		Z       int      `json:"z" xml:"Z" yaml:"z"`
+		Nested  struct{} `json:"nested" xml:"Nested" yaml:"nested"`
 		private int
 	}
 
@@ -154,6 +192,11 @@ func typeWithAllTags() {
 	xml.NewDecoder(nil).Decode(&x)
 	xml.NewEncoder(nil).EncodeElement(x, xmlSE)
 	xml.NewDecoder(nil).DecodeElement(&x, &xmlSE)
+
+	yaml.Marshal(x)
+	yaml.Unmarshal(nil, &x)
+	yaml.NewEncoder(nil).Encode(x)
+	yaml.NewDecoder(nil).Decode(&x)
 }
 
 // non-static calls should be ignored.
@@ -167,6 +210,9 @@ func nonStaticCalls() {
 
 	marshalXML := xml.Marshal
 	marshalXML(x)
+
+	marshalYAML := yaml.Marshal
+	marshalYAML(x)
 }
 
 // non-struct argument calls should be ignored.
@@ -184,4 +230,9 @@ func nonStructArgument() {
 	xml.NewDecoder(nil).Decode(&map[int]int{})
 	xml.NewEncoder(nil).EncodeElement(map[int]int{}, xmlSE)
 	xml.NewDecoder(nil).DecodeElement(&map[int]int{}, &xmlSE)
+
+	yaml.Marshal(0)
+	yaml.Unmarshal(nil, &[]int{})
+	yaml.NewEncoder(nil).Encode(map[int]int{})
+	yaml.NewDecoder(nil).Decode(&map[int]int{})
 }

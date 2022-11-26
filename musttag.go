@@ -10,6 +10,10 @@ import (
 	inspectpass "golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/types/typeutil"
+
+	// we need these dependencies for the tests in testdata to compile.
+	// `go mod tidy` will remove them from go.mod if we don't import them here.
+	_ "gopkg.in/yaml.v3"
 )
 
 var Analyzer = &analysis.Analyzer{
@@ -79,6 +83,7 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 	const (
 		jsonTag = "json"
 		xmlTag  = "xml"
+		yamlTag = "yaml"
 	)
 
 	fn := typeutil.StaticCallee(pass.TypesInfo, call)
@@ -103,6 +108,12 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 		return xmlTag, call.Args[0], true
 	case "encoding/xml.Unmarshal":
 		return xmlTag, call.Args[1], true
+	case "gopkg.in/yaml.v3.Marshal",
+		"(*gopkg.in/yaml.v3.Encoder).Encode",
+		"(*gopkg.in/yaml.v3.Decoder).Decode":
+		return yamlTag, call.Args[0], true
+	case "gopkg.in/yaml.v3.Unmarshal":
+		return yamlTag, call.Args[1], true
 	default:
 		return "", nil, false
 	}
