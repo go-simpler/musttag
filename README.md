@@ -36,6 +36,7 @@ The rational from [Uber Style Guide][1]:
 
 * `encoding/json` support
 * `encoding/xml` support
+* `gopkg.in/yaml.v3` support
 
 ## 📦 Install
 
@@ -53,7 +54,6 @@ go vet -vettool=$(which musttag) ./...
 
 ## 📅 Roadmap
 
-* Support `yaml`
 * Support `toml`
 * Support `mapstructure`
 * Support custom tags via config
