@@ -3,6 +3,7 @@ package musttag
 import (
 	"go/ast"
 	"go/token"
+	"path"
 	"strings"
 	"testing"
 
@@ -44,7 +45,5 @@ func shortName(name string) string {
 	name = strings.ReplaceAll(name, "*", "")
 	name = strings.ReplaceAll(name, "(", "")
 	name = strings.ReplaceAll(name, ")", "")
-	name = strings.TrimPrefix(name, "encoding/")
-	name = strings.TrimPrefix(name, "gopkg.in/")
-	return name
+	return path.Base(name)
 }

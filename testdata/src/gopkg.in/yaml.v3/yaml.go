@@ -8,7 +8,7 @@ func Unmarshal(_ []byte, _ any) error { return nil }
 
 type Encoder struct{}
 
-func NewEncoder(w io.Writer) *Encoder { return nil }
+func NewEncoder(_ io.Writer) *Encoder { return nil }
 func (*Encoder) Encode(_ any) error   { return nil }
 
 type Decoder struct{}
