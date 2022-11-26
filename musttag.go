@@ -14,6 +14,7 @@ import (
 	// we need these dependencies for the tests in testdata to compile.
 	// `go mod tidy` will remove them from go.mod if we don't import them here.
 	_ "github.com/BurntSushi/toml"
+	_ "github.com/mitchellh/mapstructure"
 	_ "gopkg.in/yaml.v3"
 )
 
@@ -82,10 +83,11 @@ func run(pass *analysis.Pass) (any, error) {
 // look for and the expression that likely contains the struct to check.
 func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool) {
 	const (
-		jsonTag = "json"
-		xmlTag  = "xml"
-		yamlTag = "yaml"
-		tomlTag = "toml"
+		jsonTag         = "json"
+		xmlTag          = "xml"
+		yamlTag         = "yaml"
+		tomlTag         = "toml"
+		mapstructureTag = "mapstructure"
 	)
 
 	fn := typeutil.StaticCallee(pass.TypesInfo, call)
@@ -128,6 +130,12 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 		return tomlTag, call.Args[1], true
 	case "github.com/BurntSushi/toml.DecodeFS":
 		return tomlTag, call.Args[2], true
+
+	case "github.com/mitchellh/mapstructure.Decode",
+		"github.com/mitchellh/mapstructure.DecodeMetadata",
+		"github.com/mitchellh/mapstructure.WeakDecode",
+		"github.com/mitchellh/mapstructure.WeakDecodeMetadata":
+		return mapstructureTag, call.Args[1], true
 
 	default:
 		return "", nil, false

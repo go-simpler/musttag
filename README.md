@@ -38,6 +38,7 @@ The rational from [Uber Style Guide][1]:
 * `encoding/xml` support
 * `gopkg.in/yaml.v3` support
 * `github.com/BurntSushi/toml` support
+* `github.com/mitchellh/mapstructure` support
 
 ## 📦 Install
 
@@ -59,7 +60,6 @@ go vet -vettool=$(which musttag) ./...
 
 ## 📅 Roadmap
 
-* Support `mapstructure`
 * Support custom tags via config
 
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs

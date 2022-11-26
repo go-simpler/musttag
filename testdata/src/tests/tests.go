@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 
 	"github.com/BurntSushi/toml"
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 )
 
@@ -36,7 +37,12 @@ func namedType() {
 		`\Qtoml.DecodeFS`
 		`\Qtoml.DecodeFile`
 		`\Qtoml.Encoder.Encode`
-		`\Qtoml.Decoder.Decode` */
+		`\Qtoml.Decoder.Decode`
+
+		`\Qmapstructure.Decode`
+		`\Qmapstructure.DecodeMetadata`
+		`\Qmapstructure.WeakDecode`
+		`\Qmapstructure.WeakDecodeMetadata` */
 		NoTag int
 	}
 	var x X
@@ -66,6 +72,11 @@ func namedType() {
 	toml.DecodeFile("", &x)
 	toml.NewEncoder(nil).Encode(X{})
 	toml.NewDecoder(nil).Decode(&X{})
+
+	mapstructure.Decode(nil, &x)
+	mapstructure.DecodeMetadata(nil, &x, nil)
+	mapstructure.WeakDecode(nil, &X{})
+	mapstructure.WeakDecodeMetadata(nil, &X{}, nil)
 }
 
 func nestedNamedType() {
@@ -94,11 +105,16 @@ func nestedNamedType() {
 		`\Qtoml.DecodeFS`
 		`\Qtoml.DecodeFile`
 		`\Qtoml.Encoder.Encode`
-		`\Qtoml.Decoder.Decode` */
+		`\Qtoml.Decoder.Decode`
+
+		`\Qmapstructure.Decode`
+		`\Qmapstructure.DecodeMetadata`
+		`\Qmapstructure.WeakDecode`
+		`\Qmapstructure.WeakDecodeMetadata` */
 		NoTag int
 	}
 	type X struct {
-		Y Y `json:"y" xml:"y" yaml:"y" toml:"y"`
+		Y Y `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y"`
 	}
 	var x X
 
@@ -127,6 +143,11 @@ func nestedNamedType() {
 	toml.DecodeFile("", &x)
 	toml.NewEncoder(nil).Encode(X{})
 	toml.NewDecoder(nil).Decode(&X{})
+
+	mapstructure.Decode(nil, &x)
+	mapstructure.DecodeMetadata(nil, &x, nil)
+	mapstructure.WeakDecode(nil, &X{})
+	mapstructure.WeakDecodeMetadata(nil, &X{}, nil)
 }
 
 func anonymousType() {
@@ -145,7 +166,10 @@ func anonymousType() {
 		`\Qtoml.Unmarshal`
 		`\Qtoml.Decode`
 		`\Qtoml.DecodeFS`
-		`\Qtoml.DecodeFile` */
+		`\Qtoml.DecodeFile`
+
+		`\Qmapstructure.Decode`
+		`\Qmapstructure.DecodeMetadata` */
 		NoTag int
 	}
 
@@ -174,6 +198,11 @@ func anonymousType() {
 	toml.DecodeFile("", &x)
 	toml.NewEncoder(nil).Encode(struct{ NoTag int }{})  // want `\Qtoml.Encoder.Encode`
 	toml.NewDecoder(nil).Decode(&struct{ NoTag int }{}) // want `\Qtoml.Decoder.Decode`
+
+	mapstructure.Decode(nil, &x)
+	mapstructure.DecodeMetadata(nil, &x, nil)
+	mapstructure.WeakDecode(nil, &struct{ NoTag int }{})              // want `\Qmapstructure.WeakDecode`
+	mapstructure.WeakDecodeMetadata(nil, &struct{ NoTag int }{}, nil) // want `\Qmapstructure.WeakDecodeMetadata`
 }
 
 func nestedAnonymousType() {
@@ -192,8 +221,11 @@ func nestedAnonymousType() {
 		`\Qtoml.Unmarshal`
 		`\Qtoml.Decode`
 		`\Qtoml.DecodeFS`
-		`\Qtoml.DecodeFile` */
-		Y *struct{ NoTag int } `json:"y" xml:"y" yaml:"y" toml:"y"`
+		`\Qtoml.DecodeFile`
+
+		`\Qmapstructure.Decode`
+		`\Qmapstructure.DecodeMetadata` */
+		Y *struct{ NoTag int } `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y"`
 	}
 
 	json.Marshal(x)
@@ -221,14 +253,19 @@ func nestedAnonymousType() {
 	toml.DecodeFile("", &x)
 	toml.NewEncoder(nil).Encode(struct{ Y struct{ NoTag int } }{})  // want `\Qtoml.Encoder.Encode`
 	toml.NewDecoder(nil).Decode(&struct{ Y struct{ NoTag int } }{}) // want `\Qtoml.Decoder.Decode`
+
+	mapstructure.Decode(nil, &x)
+	mapstructure.DecodeMetadata(nil, &x, nil)
+	mapstructure.WeakDecode(nil, &struct{ Y struct{ NoTag int } }{})              // want `\Qmapstructure.WeakDecode`
+	mapstructure.WeakDecodeMetadata(nil, &struct{ Y struct{ NoTag int } }{}, nil) // want `\Qmapstructure.WeakDecodeMetadata`
 }
 
 // all good, nothing to report.
 func typeWithAllTags() {
 	var x struct {
-		Y       int      `json:"y" xml:"y" yaml:"y" toml:"y"`
-		Z       int      `json:"z" xml:"z" yaml:"z" toml:"z"`
-		Nested  struct{} `json:"nested" xml:"nested" yaml:"nested" toml:"nested"`
+		Y       int      `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y"`
+		Z       int      `json:"z" xml:"z" yaml:"z" toml:"z" mapstructure:"z"`
+		Nested  struct{} `json:"nested" xml:"nested" yaml:"nested" toml:"nested" mapstructure:"nested"`
 		private int
 	}
 
@@ -257,6 +294,11 @@ func typeWithAllTags() {
 	toml.DecodeFile("", &x)
 	toml.NewEncoder(nil).Encode(x)
 	toml.NewDecoder(nil).Decode(&x)
+
+	mapstructure.Decode(nil, &x)
+	mapstructure.DecodeMetadata(nil, &x, nil)
+	mapstructure.WeakDecode(nil, &x)
+	mapstructure.WeakDecodeMetadata(nil, &x, nil)
 }
 
 // non-static calls should be ignored.
@@ -276,6 +318,9 @@ func nonStaticCalls() {
 
 	unmarshalTOML := toml.Unmarshal
 	unmarshalTOML(nil, &x)
+
+	decodeMS := mapstructure.Decode
+	decodeMS(nil, &x)
 }
 
 // non-struct argument calls should be ignored.
@@ -305,4 +350,9 @@ func nonStructArgument() {
 	toml.DecodeFile("", &[]int{})
 	toml.NewEncoder(nil).Encode(map[int]int{})
 	toml.NewDecoder(nil).Decode(&map[int]int{})
+
+	mapstructure.Decode(nil, &[]int{})
+	mapstructure.DecodeMetadata(nil, &[]int{}, nil)
+	mapstructure.WeakDecode(nil, &map[int]int{})
+	mapstructure.WeakDecodeMetadata(nil, &map[int]int{}, nil)
 }

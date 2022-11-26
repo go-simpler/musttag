@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 
 	"github.com/BurntSushi/toml"
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 )
 
@@ -44,4 +45,13 @@ func exampleTOML() {
 	}
 	toml.Decode("", &user)
 	toml.Unmarshal(nil, &user)
+}
+
+func exampleMS() {
+	var user struct { // want `\Qexported fields should be annotated with the "mapstructure" tag`
+		Name  string
+		Email string `mapstructure:"email"`
+	}
+	mapstructure.Decode(nil, &user)
+	mapstructure.WeakDecode(nil, &user)
 }
