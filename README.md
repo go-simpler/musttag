@@ -47,6 +47,10 @@ go install github.com/junk1tm/musttag/cmd/musttag
 
 ## 📋 Usage
 
+```shell
+musttag ./...
+```
+
 With `go vet`:
 
 ```shell
