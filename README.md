@@ -37,6 +37,7 @@ The rational from [Uber Style Guide][1]:
 * `encoding/json` support
 * `encoding/xml` support
 * `gopkg.in/yaml.v3` support
+* `github.com/BurntSushi/toml` support
 
 ## 📦 Install
 
@@ -46,6 +47,10 @@ go install github.com/junk1tm/musttag/cmd/musttag
 
 ## 📋 Usage
 
+```shell
+musttag ./...
+```
+
 With `go vet`:
 
 ```shell
@@ -54,7 +59,6 @@ go vet -vettool=$(which musttag) ./...
 
 ## 📅 Roadmap
 
-* Support `toml`
 * Support `mapstructure`
 * Support custom tags via config
 

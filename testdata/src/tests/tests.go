@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 
+	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,7 +29,14 @@ func namedType() {
 		`\Qyaml.v3.Marshal`
 		`\Qyaml.v3.Unmarshal`
 		`\Qyaml.v3.Encoder.Encode`
-		`\Qyaml.v3.Decoder.Decode` */
+		`\Qyaml.v3.Decoder.Decode`
+
+		`\Qtoml.Unmarshal`
+		`\Qtoml.Decode`
+		`\Qtoml.DecodeFS`
+		`\Qtoml.DecodeFile`
+		`\Qtoml.Encoder.Encode`
+		`\Qtoml.Decoder.Decode` */
 		NoTag int
 	}
 	var x X
@@ -51,6 +59,13 @@ func namedType() {
 	yaml.Unmarshal(nil, &x)
 	yaml.NewEncoder(nil).Encode(X{})
 	yaml.NewDecoder(nil).Decode(&X{})
+
+	toml.Unmarshal(nil, &x)
+	toml.Decode("", &x)
+	toml.DecodeFS(nil, "", &x)
+	toml.DecodeFile("", &x)
+	toml.NewEncoder(nil).Encode(X{})
+	toml.NewDecoder(nil).Decode(&X{})
 }
 
 func nestedNamedType() {
@@ -72,11 +87,18 @@ func nestedNamedType() {
 		`\Qyaml.v3.Marshal`
 		`\Qyaml.v3.Unmarshal`
 		`\Qyaml.v3.Encoder.Encode`
-		`\Qyaml.v3.Decoder.Decode` */
+		`\Qyaml.v3.Decoder.Decode`
+
+		`\Qtoml.Unmarshal`
+		`\Qtoml.Decode`
+		`\Qtoml.DecodeFS`
+		`\Qtoml.DecodeFile`
+		`\Qtoml.Encoder.Encode`
+		`\Qtoml.Decoder.Decode` */
 		NoTag int
 	}
 	type X struct {
-		Y Y `json:"y" xml:"Y" yaml:"y"`
+		Y Y `json:"y" xml:"y" yaml:"y" toml:"y"`
 	}
 	var x X
 
@@ -98,6 +120,13 @@ func nestedNamedType() {
 	yaml.Unmarshal(nil, &x)
 	yaml.NewEncoder(nil).Encode(X{})
 	yaml.NewDecoder(nil).Decode(&X{})
+
+	toml.Unmarshal(nil, &x)
+	toml.Decode("", &x)
+	toml.DecodeFS(nil, "", &x)
+	toml.DecodeFile("", &x)
+	toml.NewEncoder(nil).Encode(X{})
+	toml.NewDecoder(nil).Decode(&X{})
 }
 
 func anonymousType() {
@@ -111,7 +140,12 @@ func anonymousType() {
 		`\Qxml.Unmarshal`
 
 		`\Qyaml.v3.Marshal`
-		`\Qyaml.v3.Unmarshal` */
+		`\Qyaml.v3.Unmarshal`
+
+		`\Qtoml.Unmarshal`
+		`\Qtoml.Decode`
+		`\Qtoml.DecodeFS`
+		`\Qtoml.DecodeFile` */
 		NoTag int
 	}
 
@@ -133,6 +167,13 @@ func anonymousType() {
 	yaml.Unmarshal(nil, &x)
 	yaml.NewEncoder(nil).Encode(struct{ NoTag int }{})  // want `\Qyaml.v3.Encoder.Encode`
 	yaml.NewDecoder(nil).Decode(&struct{ NoTag int }{}) // want `\Qyaml.v3.Decoder.Decode`
+
+	toml.Unmarshal(nil, &x)
+	toml.Decode("", &x)
+	toml.DecodeFS(nil, "", &x)
+	toml.DecodeFile("", &x)
+	toml.NewEncoder(nil).Encode(struct{ NoTag int }{})  // want `\Qtoml.Encoder.Encode`
+	toml.NewDecoder(nil).Decode(&struct{ NoTag int }{}) // want `\Qtoml.Decoder.Decode`
 }
 
 func nestedAnonymousType() {
@@ -146,8 +187,13 @@ func nestedAnonymousType() {
 		`\Qxml.Unmarshal`
 
 		`\Qyaml.v3.Marshal`
-		`\Qyaml.v3.Unmarshal` */
-		Y *struct{ NoTag int } `json:"y"`
+		`\Qyaml.v3.Unmarshal`
+
+		`\Qtoml.Unmarshal`
+		`\Qtoml.Decode`
+		`\Qtoml.DecodeFS`
+		`\Qtoml.DecodeFile` */
+		Y *struct{ NoTag int } `json:"y" xml:"y" yaml:"y" toml:"y"`
 	}
 
 	json.Marshal(x)
@@ -168,14 +214,21 @@ func nestedAnonymousType() {
 	yaml.Unmarshal(nil, &x)
 	yaml.NewEncoder(nil).Encode(struct{ Y struct{ NoTag int } }{})  // want `\Qyaml.v3.Encoder.Encode`
 	yaml.NewDecoder(nil).Decode(&struct{ Y struct{ NoTag int } }{}) // want `\Qyaml.v3.Decoder.Decode`
+
+	toml.Unmarshal(nil, &x)
+	toml.Decode("", &x)
+	toml.DecodeFS(nil, "", &x)
+	toml.DecodeFile("", &x)
+	toml.NewEncoder(nil).Encode(struct{ Y struct{ NoTag int } }{})  // want `\Qtoml.Encoder.Encode`
+	toml.NewDecoder(nil).Decode(&struct{ Y struct{ NoTag int } }{}) // want `\Qtoml.Decoder.Decode`
 }
 
 // all good, nothing to report.
 func typeWithAllTags() {
 	var x struct {
-		Y       int      `json:"y" xml:"Y" yaml:"y"`
-		Z       int      `json:"z" xml:"Z" yaml:"z"`
-		Nested  struct{} `json:"nested" xml:"Nested" yaml:"nested"`
+		Y       int      `json:"y" xml:"y" yaml:"y" toml:"y"`
+		Z       int      `json:"z" xml:"z" yaml:"z" toml:"z"`
+		Nested  struct{} `json:"nested" xml:"nested" yaml:"nested" toml:"nested"`
 		private int
 	}
 
@@ -197,6 +250,13 @@ func typeWithAllTags() {
 	yaml.Unmarshal(nil, &x)
 	yaml.NewEncoder(nil).Encode(x)
 	yaml.NewDecoder(nil).Decode(&x)
+
+	toml.Unmarshal(nil, &x)
+	toml.Decode("", &x)
+	toml.DecodeFS(nil, "", &x)
+	toml.DecodeFile("", &x)
+	toml.NewEncoder(nil).Encode(x)
+	toml.NewDecoder(nil).Decode(&x)
 }
 
 // non-static calls should be ignored.
@@ -213,6 +273,9 @@ func nonStaticCalls() {
 
 	marshalYAML := yaml.Marshal
 	marshalYAML(x)
+
+	unmarshalTOML := toml.Unmarshal
+	unmarshalTOML(nil, &x)
 }
 
 // non-struct argument calls should be ignored.
@@ -235,4 +298,11 @@ func nonStructArgument() {
 	yaml.Unmarshal(nil, &[]int{})
 	yaml.NewEncoder(nil).Encode(map[int]int{})
 	yaml.NewDecoder(nil).Decode(&map[int]int{})
+
+	toml.Unmarshal(nil, &[]int{})
+	toml.Decode("", &[]int{})
+	toml.DecodeFS(nil, "", &[]int{})
+	toml.DecodeFile("", &[]int{})
+	toml.NewEncoder(nil).Encode(map[int]int{})
+	toml.NewDecoder(nil).Decode(&map[int]int{})
 }

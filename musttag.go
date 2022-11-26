@@ -13,6 +13,7 @@ import (
 
 	// we need these dependencies for the tests in testdata to compile.
 	// `go mod tidy` will remove them from go.mod if we don't import them here.
+	_ "github.com/BurntSushi/toml"
 	_ "gopkg.in/yaml.v3"
 )
 
@@ -84,6 +85,7 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 		jsonTag = "json"
 		xmlTag  = "xml"
 		yamlTag = "yaml"
+		tomlTag = "toml"
 	)
 
 	fn := typeutil.StaticCallee(pass.TypesInfo, call)
@@ -99,6 +101,7 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 		return jsonTag, call.Args[0], true
 	case "encoding/json.Unmarshal":
 		return jsonTag, call.Args[1], true
+
 	case "encoding/xml.Marshal",
 		"encoding/xml.MarshalIndent",
 		"(*encoding/xml.Encoder).Encode",
@@ -108,12 +111,24 @@ func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool
 		return xmlTag, call.Args[0], true
 	case "encoding/xml.Unmarshal":
 		return xmlTag, call.Args[1], true
+
 	case "gopkg.in/yaml.v3.Marshal",
 		"(*gopkg.in/yaml.v3.Encoder).Encode",
 		"(*gopkg.in/yaml.v3.Decoder).Decode":
 		return yamlTag, call.Args[0], true
 	case "gopkg.in/yaml.v3.Unmarshal":
 		return yamlTag, call.Args[1], true
+
+	case "(*github.com/BurntSushi/toml.Encoder).Encode",
+		"(*github.com/BurntSushi/toml.Decoder).Decode":
+		return tomlTag, call.Args[0], true
+	case "github.com/BurntSushi/toml.Unmarshal",
+		"github.com/BurntSushi/toml.Decode",
+		"github.com/BurntSushi/toml.DecodeFile":
+		return tomlTag, call.Args[1], true
+	case "github.com/BurntSushi/toml.DecodeFS":
+		return tomlTag, call.Args[2], true
+
 	default:
 		return "", nil, false
 	}
