@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
-	inspectpass "golang.org/x/tools/go/analysis/passes/inspect"
+	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/types/typeutil"
 
-	// we need these dependencies for the tests in testdata to compile.
-	// `go mod tidy` will remove them from go.mod if we don't import them here.
+	// we only need these imports in testdata/src, but `go mod tidy`
+	// will remove them from go.mod unless we duplicate them here.
 	_ "github.com/BurntSushi/toml"
 	_ "github.com/mitchellh/mapstructure"
 	_ "gopkg.in/yaml.v3"
@@ -21,7 +21,7 @@ import (
 var Analyzer = &analysis.Analyzer{
 	Name:     "musttag",
 	Doc:      "check if struct fields used in Marshal/Unmarshal are annotated with the relevant tag",
-	Requires: []*analysis.Analyzer{inspectpass.Analyzer},
+	Requires: []*analysis.Analyzer{inspect.Analyzer},
 	Run:      run,
 }
 
@@ -38,7 +38,7 @@ var (
 
 // run starts the analysis.
 func run(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspectpass.Analyzer].(*inspector.Inspector)
+	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	filter := []ast.Node{
 		(*ast.CallExpr)(nil),
@@ -50,7 +50,7 @@ func run(pass *analysis.Pass) (any, error) {
 	}
 	reported := make(map[report]struct{})
 
-	inspect.Preorder(filter, func(n ast.Node) {
+	insp.Preorder(filter, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
 
 		tag, expr, ok := tagAndExpr(pass, call)
