@@ -11,8 +11,6 @@ import (
 )
 
 func TestAll(t *testing.T) {
-	// TODO(junk1tm): do not depend on tests execution order
-
 	// NOTE(junk1tm): analysistest isn't aware of the main package's modules
 	// (see https://github.com/golang/go/issues/37054), so to run tests with
 	// external dependencies we have to be creative. Using vendor with symlinks
@@ -33,11 +31,21 @@ func TestAll(t *testing.T) {
 	})
 
 	t.Run("tests", func(t *testing.T) {
+		original := struct {
+			reportOnce bool
+			reportf    func(pass *analysis.Pass, pos token.Pos, fn Func)
+		}{
+			reportOnce: reportOnce,
+			reportf:    reportf,
+		}
+		defer func() { reportOnce, reportf = original.reportOnce, original.reportf }()
+
 		// for the tests we want to record reports from all functions.
 		reportOnce = false
 		reportf = func(pass *analysis.Pass, pos token.Pos, fn Func) {
 			pass.Reportf(pos, shortName(fn.Name))
 		}
+
 		testdata := analysistest.TestData()
 		analysistest.Run(t, testdata, analyzer, "tests")
 	})
