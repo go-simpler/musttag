@@ -1,7 +1,6 @@
 package musttag
 
 import (
-	"go/ast"
 	"go/token"
 	"path"
 	"strings"
@@ -9,7 +8,6 @@ import (
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/analysistest"
-	"golang.org/x/tools/go/types/typeutil"
 )
 
 func TestAll(t *testing.T) {
@@ -24,20 +22,24 @@ func TestAll(t *testing.T) {
 	// functions signatures to match) and to put them exactly at
 	// testdata/src/path/to/pkg (GOPATH?), otherwise it won't work.
 
+	analyzer := New(
+		Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
+		Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
+	)
+
 	t.Run("examples", func(t *testing.T) {
 		testdata := analysistest.TestData()
-		analysistest.Run(t, testdata, Analyzer, "examples")
+		analysistest.Run(t, testdata, analyzer, "examples")
 	})
 
 	t.Run("tests", func(t *testing.T) {
 		// for the tests we want to record reports from all functions.
 		reportOnce = false
-		reportf = func(pass *analysis.Pass, call *ast.CallExpr, pos token.Pos, tag string) {
-			fn := typeutil.StaticCallee(pass.TypesInfo, call)
-			pass.Reportf(pos, shortName(fn.FullName()))
+		reportf = func(pass *analysis.Pass, pos token.Pos, fn Func) {
+			pass.Reportf(pos, shortName(fn.Name))
 		}
 		testdata := analysistest.TestData()
-		analysistest.Run(t, testdata, Analyzer, "tests")
+		analysistest.Run(t, testdata, analyzer, "tests")
 	})
 }
 

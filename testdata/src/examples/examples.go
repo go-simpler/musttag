@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 
+	"example.com/custom"
 	"github.com/BurntSushi/toml"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
@@ -54,4 +55,13 @@ func exampleMS() {
 	}
 	mapstructure.Decode(nil, &user)
 	mapstructure.WeakDecode(nil, &user)
+}
+
+func exampleCustom() {
+	var user struct { // want `\Qexported fields should be annotated with the "custom" tag`
+		Name  string
+		Email string `custom:"email"`
+	}
+	custom.Marshal(user)
+	custom.Unmarshal(nil, &user)
 }

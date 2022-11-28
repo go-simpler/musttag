@@ -9,7 +9,7 @@ A Go linter that enforces field tags in (un)marshaled structs
 
 ## 📌 About
 
-`musttag` checks if struct fields used in `Marshal`/`Unmarshal` are annotated with the relevant tag:
+`musttag` checks that exported fields of a struct passed to a `Marshal`-like function are annotated with the relevant tag:
 
 ```go
 // BAD:
@@ -34,16 +34,19 @@ The rational from [Uber Style Guide][1]:
 
 ## 🚀 Features
 
-* `encoding/json` support
-* `encoding/xml` support
-* `gopkg.in/yaml.v3` support
-* `github.com/BurntSushi/toml` support
-* `github.com/mitchellh/mapstructure` support
+`musttag` supports these packages out of the box:
+
+* `encoding/json`
+* `encoding/xml`
+* `gopkg.in/yaml.v3`
+* `github.com/BurntSushi/toml`
+* `github.com/mitchellh/mapstructure`
+* ...and any custom one
 
 ## 📦 Install
 
 ```shell
-go install github.com/junk1tm/musttag/cmd/musttag
+go install github.com/junk1tm/musttag/cmd/musttag@latest
 ```
 
 ## 📋 Usage
@@ -57,9 +60,5 @@ With `go vet`:
 ```shell
 go vet -vettool=$(which musttag) ./...
 ```
-
-## 📅 Roadmap
-
-* Support custom tags via config
 
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs

@@ -1,10 +1,11 @@
+// Package musttag implements the musttag analyzer.
 package musttag
 
 import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"strings"
+	"reflect"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -13,16 +14,68 @@ import (
 
 	// we only need these imports in testdata/src, but `go mod tidy`
 	// will remove them from go.mod unless we duplicate them here.
+	_ "example.com/custom"
 	_ "github.com/BurntSushi/toml"
 	_ "github.com/mitchellh/mapstructure"
 	_ "gopkg.in/yaml.v3"
 )
 
-var Analyzer = &analysis.Analyzer{
-	Name:     "musttag",
-	Doc:      "check if struct fields used in Marshal/Unmarshal are annotated with the relevant tag",
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+// Func describes a function call to look for, e.g. json.Marshal.
+type Func struct {
+	Name   string // Name is the full name of the function, including the package.
+	Tag    string // Tag is the struct tag whose presence should be ensured.
+	ArgPos int    // ArgPos is the position of the argument to check.
+}
+
+// builtin is a set of functions supported out of the box.
+var builtin = []Func{
+	{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 0},
+	{Name: "encoding/json.MarshalIndent", Tag: "json", ArgPos: 0},
+	{Name: "encoding/json.Unmarshal", Tag: "json", ArgPos: 1},
+	{Name: "(*encoding/json.Encoder).Encode", Tag: "json", ArgPos: 0},
+	{Name: "(*encoding/json.Decoder).Decode", Tag: "json", ArgPos: 0},
+
+	{Name: "encoding/xml.Marshal", Tag: "xml", ArgPos: 0},
+	{Name: "encoding/xml.MarshalIndent", Tag: "xml", ArgPos: 0},
+	{Name: "encoding/xml.Unmarshal", Tag: "xml", ArgPos: 1},
+	{Name: "(*encoding/xml.Encoder).Encode", Tag: "xml", ArgPos: 0},
+	{Name: "(*encoding/xml.Decoder).Decode", Tag: "xml", ArgPos: 0},
+	{Name: "(*encoding/xml.Encoder).EncodeElement", Tag: "xml", ArgPos: 0},
+	{Name: "(*encoding/xml.Decoder).DecodeElement", Tag: "xml", ArgPos: 0},
+
+	{Name: "gopkg.in/yaml.v3.Marshal", Tag: "yaml", ArgPos: 0},
+	{Name: "gopkg.in/yaml.v3.Unmarshal", Tag: "yaml", ArgPos: 1},
+	{Name: "(*gopkg.in/yaml.v3.Encoder).Encode", Tag: "yaml", ArgPos: 0},
+	{Name: "(*gopkg.in/yaml.v3.Decoder).Decode", Tag: "yaml", ArgPos: 0},
+
+	{Name: "github.com/BurntSushi/toml.Unmarshal", Tag: "toml", ArgPos: 1},
+	{Name: "github.com/BurntSushi/toml.Decode", Tag: "toml", ArgPos: 1},
+	{Name: "github.com/BurntSushi/toml.DecodeFS", Tag: "toml", ArgPos: 2},
+	{Name: "github.com/BurntSushi/toml.DecodeFile", Tag: "toml", ArgPos: 1},
+	{Name: "(*github.com/BurntSushi/toml.Encoder).Encode", Tag: "toml", ArgPos: 0},
+	{Name: "(*github.com/BurntSushi/toml.Decoder).Decode", Tag: "toml", ArgPos: 0},
+
+	{Name: "github.com/mitchellh/mapstructure.Decode", Tag: "mapstructure", ArgPos: 1},
+	{Name: "github.com/mitchellh/mapstructure.DecodeMetadata", Tag: "mapstructure", ArgPos: 1},
+	{Name: "github.com/mitchellh/mapstructure.WeakDecode", Tag: "mapstructure", ArgPos: 1},
+	{Name: "github.com/mitchellh/mapstructure.WeakDecodeMetadata", Tag: "mapstructure", ArgPos: 1},
+}
+
+// New creates a new musttag analyzer. To report a custom function provide its
+// description via Func, it will be added to the builtin ones.
+func New(funcs ...Func) *analysis.Analyzer {
+	return &analysis.Analyzer{
+		Name:     "musttag",
+		Doc:      "enforce field tags in (un)marshaled structs",
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+		Run: func(pass *analysis.Pass) (any, error) {
+			m := make(map[string]Func)
+			for _, fn := range append(builtin, funcs...) {
+				m[fn.Name] = fn
+			}
+			return run(pass, m)
+		},
+	}
 }
 
 // for tests only.
@@ -31,13 +84,13 @@ var (
 	reportOnce = true
 
 	// reportf is a wrapper for pass.Reportf (as a variable, so it could be mocked in tests).
-	reportf = func(pass *analysis.Pass, call *ast.CallExpr, pos token.Pos, tag string) {
-		pass.Reportf(pos, "exported fields should be annotated with the %q tag", tag)
+	reportf = func(pass *analysis.Pass, pos token.Pos, fn Func) {
+		pass.Reportf(pos, "exported fields should be annotated with the %q tag", fn.Tag)
 	}
 )
 
 // run starts the analysis.
-func run(pass *analysis.Pass) (any, error) {
+func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 	insp := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	filter := []ast.Node{
@@ -53,93 +106,35 @@ func run(pass *analysis.Pass) (any, error) {
 	insp.Preorder(filter, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
 
-		tag, expr, ok := tagAndExpr(pass, call)
+		callee := typeutil.StaticCallee(pass.TypesInfo, call)
+		if callee == nil {
+			return
+		}
+
+		fn, ok := funcs[callee.FullName()]
 		if !ok {
 			return
 		}
 
-		s, pos, ok := structAndPos(pass, expr)
+		s, pos, ok := structAndPos(pass, call.Args[fn.ArgPos])
 		if !ok {
 			return
 		}
 
-		if ok := checkStruct(s, tag, &pos); ok {
+		if ok := checkStruct(s, fn.Tag, &pos); ok {
 			return
 		}
 
-		r := report{pos, tag}
+		r := report{pos, fn.Tag}
 		if _, ok := reported[r]; ok && reportOnce {
 			return
 		}
 
-		reportf(pass, call, pos, tag)
+		reportf(pass, pos, fn)
 		reported[r] = struct{}{}
 	})
 
 	return nil, nil
-}
-
-// tagAndExpr analyses the given function call and returns the struct tag to
-// look for and the expression that likely contains the struct to check.
-func tagAndExpr(pass *analysis.Pass, call *ast.CallExpr) (string, ast.Expr, bool) {
-	const (
-		jsonTag         = "json"
-		xmlTag          = "xml"
-		yamlTag         = "yaml"
-		tomlTag         = "toml"
-		mapstructureTag = "mapstructure"
-	)
-
-	fn := typeutil.StaticCallee(pass.TypesInfo, call)
-	if fn == nil {
-		return "", nil, false
-	}
-
-	switch fn.FullName() {
-	case "encoding/json.Marshal",
-		"encoding/json.MarshalIndent",
-		"(*encoding/json.Encoder).Encode",
-		"(*encoding/json.Decoder).Decode":
-		return jsonTag, call.Args[0], true
-	case "encoding/json.Unmarshal":
-		return jsonTag, call.Args[1], true
-
-	case "encoding/xml.Marshal",
-		"encoding/xml.MarshalIndent",
-		"(*encoding/xml.Encoder).Encode",
-		"(*encoding/xml.Decoder).Decode",
-		"(*encoding/xml.Encoder).EncodeElement",
-		"(*encoding/xml.Decoder).DecodeElement":
-		return xmlTag, call.Args[0], true
-	case "encoding/xml.Unmarshal":
-		return xmlTag, call.Args[1], true
-
-	case "gopkg.in/yaml.v3.Marshal",
-		"(*gopkg.in/yaml.v3.Encoder).Encode",
-		"(*gopkg.in/yaml.v3.Decoder).Decode":
-		return yamlTag, call.Args[0], true
-	case "gopkg.in/yaml.v3.Unmarshal":
-		return yamlTag, call.Args[1], true
-
-	case "(*github.com/BurntSushi/toml.Encoder).Encode",
-		"(*github.com/BurntSushi/toml.Decoder).Decode":
-		return tomlTag, call.Args[0], true
-	case "github.com/BurntSushi/toml.Unmarshal",
-		"github.com/BurntSushi/toml.Decode",
-		"github.com/BurntSushi/toml.DecodeFile":
-		return tomlTag, call.Args[1], true
-	case "github.com/BurntSushi/toml.DecodeFS":
-		return tomlTag, call.Args[2], true
-
-	case "github.com/mitchellh/mapstructure.Decode",
-		"github.com/mitchellh/mapstructure.DecodeMetadata",
-		"github.com/mitchellh/mapstructure.WeakDecode",
-		"github.com/mitchellh/mapstructure.WeakDecodeMetadata":
-		return mapstructureTag, call.Args[1], true
-
-	default:
-		return "", nil, false
-	}
 }
 
 // structAndPos analyses the given expression and returns the struct to check
@@ -182,16 +177,8 @@ func checkStruct(s *types.Struct, tag string, pos *token.Pos) (ok bool) {
 			continue
 		}
 
-		tagged := false
-		for _, t := range strings.Split(s.Tag(i), " ") {
-			// from the [reflect.StructTag] docs:
-			// By convention, tag strings are a concatenation
-			// of optionally space-separated key:"value" pairs.
-			if strings.HasPrefix(t, tag+":") {
-				tagged = true
-			}
-		}
-		if !tagged {
+		st := reflect.StructTag(s.Tag(i))
+		if _, ok := st.Lookup(tag); !ok {
 			return false
 		}
 
