@@ -2,10 +2,15 @@
 package musttag
 
 import (
+	"errors"
+	"flag"
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
@@ -61,18 +66,49 @@ var builtin = []Func{
 	{Name: "github.com/mitchellh/mapstructure.WeakDecodeMetadata", Tag: "mapstructure", ArgPos: 1},
 }
 
+// flags creates a flag set for the analyzer. The funcs slice will be filled
+// with custom functions passed via CLI flags.
+func flags(funcs *[]Func) flag.FlagSet {
+	fs := flag.NewFlagSet("musttag", flag.ContinueOnError)
+	fs.Func("fn", "report custom function (name:tag:argpos)", func(s string) error {
+		parts := strings.Split(s, ":")
+		if len(parts) != 3 {
+			return errors.New("-fn: invalid format")
+		}
+		pos, err := strconv.Atoi(parts[2])
+		if err != nil {
+			return fmt.Errorf("parsing argpos: %w", err)
+		}
+		*funcs = append(*funcs, Func{
+			Name:   parts[0],
+			Tag:    parts[1],
+			ArgPos: pos,
+		})
+		return nil
+	})
+	return *fs
+}
+
 // New creates a new musttag analyzer. To report a custom function provide its
 // description via Func, it will be added to the builtin ones.
 func New(funcs ...Func) *analysis.Analyzer {
+	var flagFuncs []Func
 	return &analysis.Analyzer{
 		Name:     "musttag",
 		Doc:      "enforce field tags in (un)marshaled structs",
+		Flags:    flags(&flagFuncs),
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 		Run: func(pass *analysis.Pass) (any, error) {
-			m := make(map[string]Func)
-			for _, fn := range append(builtin, funcs...) {
-				m[fn.Name] = fn
+			l := len(builtin) + len(funcs) + len(flagFuncs)
+			m := make(map[string]Func, l)
+			toMap := func(slice []Func) {
+				for _, fn := range slice {
+					m[fn.Name] = fn
+				}
 			}
+			toMap(builtin)
+			toMap(funcs)
+			toMap(flagFuncs)
 			return run(pass, m)
 		},
 	}

@@ -41,7 +41,7 @@ The rational from [Uber Style Guide][1]:
 * `gopkg.in/yaml.v3`
 * `github.com/BurntSushi/toml`
 * `github.com/mitchellh/mapstructure`
-* ...and any custom one
+* ...and any [custom one](#custom-packages)
 
 ## 📦 Install
 
@@ -51,14 +51,30 @@ go install github.com/junk1tm/musttag/cmd/musttag@latest
 
 ## 📋 Usage
 
+As a standalone binary:
+
 ```shell
 musttag ./...
 ```
 
-With `go vet`:
+Via `go vet`:
 
 ```shell
 go vet -vettool=$(which musttag) ./...
+```
+
+### Custom packages
+
+The `-fn=name:tag:argpos` flag can be used to report functions from custom packages, where
+
+* `name` is the full name of the function, including the package
+* `tag` is the struct tag whose presence should be ensured
+* `argpos` is the position of the argument to check
+
+For example, to support the `sqlx.Get` function:
+
+```shell
+musttag -fn="github.com/jmoiron/sqlx.Get:db:1" ./...
 ```
 
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
