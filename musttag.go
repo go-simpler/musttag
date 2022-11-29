@@ -14,13 +14,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
 	"golang.org/x/tools/go/types/typeutil"
-
-	// we only need these imports in testdata/src, but `go mod tidy`
-	// will remove them from go.mod unless we duplicate them here.
-	_ "example.com/custom"
-	_ "github.com/BurntSushi/toml"
-	_ "github.com/mitchellh/mapstructure"
-	_ "gopkg.in/yaml.v3"
 )
 
 // Func describes a function call to look for, e.g. json.Marshal.
