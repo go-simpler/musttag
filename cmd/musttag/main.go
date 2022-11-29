@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	singlechecker.Main(musttag.Analyzer)
+	singlechecker.Main(musttag.New())
 }

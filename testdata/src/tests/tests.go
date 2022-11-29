@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 
+	"example.com/custom"
 	"github.com/BurntSushi/toml"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
@@ -42,7 +43,10 @@ func namedType() {
 		`\Qmapstructure.Decode`
 		`\Qmapstructure.DecodeMetadata`
 		`\Qmapstructure.WeakDecode`
-		`\Qmapstructure.WeakDecodeMetadata` */
+		`\Qmapstructure.WeakDecodeMetadata`
+
+		`\Qcustom.Marshal`
+		`\Qcustom.Unmarshal` */
 		NoTag int
 	}
 	var x X
@@ -77,6 +81,9 @@ func namedType() {
 	mapstructure.DecodeMetadata(nil, &x, nil)
 	mapstructure.WeakDecode(nil, &X{})
 	mapstructure.WeakDecodeMetadata(nil, &X{}, nil)
+
+	custom.Marshal(x)
+	custom.Unmarshal(nil, &x)
 }
 
 func nestedNamedType() {
@@ -110,11 +117,14 @@ func nestedNamedType() {
 		`\Qmapstructure.Decode`
 		`\Qmapstructure.DecodeMetadata`
 		`\Qmapstructure.WeakDecode`
-		`\Qmapstructure.WeakDecodeMetadata` */
+		`\Qmapstructure.WeakDecodeMetadata`
+
+		`\Qcustom.Marshal`
+		`\Qcustom.Unmarshal` */
 		NoTag int
 	}
 	type X struct {
-		Y Y `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y"`
+		Y Y `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y" custom:"y"`
 	}
 	var x X
 
@@ -148,6 +158,9 @@ func nestedNamedType() {
 	mapstructure.DecodeMetadata(nil, &x, nil)
 	mapstructure.WeakDecode(nil, &X{})
 	mapstructure.WeakDecodeMetadata(nil, &X{}, nil)
+
+	custom.Marshal(x)
+	custom.Unmarshal(nil, &x)
 }
 
 func anonymousType() {
@@ -169,7 +182,10 @@ func anonymousType() {
 		`\Qtoml.DecodeFile`
 
 		`\Qmapstructure.Decode`
-		`\Qmapstructure.DecodeMetadata` */
+		`\Qmapstructure.DecodeMetadata`
+
+		`\Qcustom.Marshal`
+		`\Qcustom.Unmarshal` */
 		NoTag int
 	}
 
@@ -203,6 +219,9 @@ func anonymousType() {
 	mapstructure.DecodeMetadata(nil, &x, nil)
 	mapstructure.WeakDecode(nil, &struct{ NoTag int }{})              // want `\Qmapstructure.WeakDecode`
 	mapstructure.WeakDecodeMetadata(nil, &struct{ NoTag int }{}, nil) // want `\Qmapstructure.WeakDecodeMetadata`
+
+	custom.Marshal(x)
+	custom.Unmarshal(nil, &x)
 }
 
 func nestedAnonymousType() {
@@ -224,8 +243,11 @@ func nestedAnonymousType() {
 		`\Qtoml.DecodeFile`
 
 		`\Qmapstructure.Decode`
-		`\Qmapstructure.DecodeMetadata` */
-		Y *struct{ NoTag int } `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y"`
+		`\Qmapstructure.DecodeMetadata`
+
+		`\Qcustom.Marshal`
+		`\Qcustom.Unmarshal` */
+		Y *struct{ NoTag int } `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y" custom:"y"`
 	}
 
 	json.Marshal(x)
@@ -258,14 +280,17 @@ func nestedAnonymousType() {
 	mapstructure.DecodeMetadata(nil, &x, nil)
 	mapstructure.WeakDecode(nil, &struct{ Y struct{ NoTag int } }{})              // want `\Qmapstructure.WeakDecode`
 	mapstructure.WeakDecodeMetadata(nil, &struct{ Y struct{ NoTag int } }{}, nil) // want `\Qmapstructure.WeakDecodeMetadata`
+
+	custom.Marshal(x)
+	custom.Unmarshal(nil, &x)
 }
 
 // all good, nothing to report.
 func typeWithAllTags() {
 	var x struct {
-		Y       int      `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y"`
-		Z       int      `json:"z" xml:"z" yaml:"z" toml:"z" mapstructure:"z"`
-		Nested  struct{} `json:"nested" xml:"nested" yaml:"nested" toml:"nested" mapstructure:"nested"`
+		Y       int      `json:"y" xml:"y" yaml:"y" toml:"y" mapstructure:"y" custom:"y"`
+		Z       int      `json:"z" xml:"z" yaml:"z" toml:"z" mapstructure:"z" custom:"z"`
+		Nested  struct{} `json:"nested" xml:"nested" yaml:"nested" toml:"nested" mapstructure:"nested" custom:"nested"`
 		private int
 	}
 
@@ -299,6 +324,9 @@ func typeWithAllTags() {
 	mapstructure.DecodeMetadata(nil, &x, nil)
 	mapstructure.WeakDecode(nil, &x)
 	mapstructure.WeakDecodeMetadata(nil, &x, nil)
+
+	custom.Marshal(x)
+	custom.Unmarshal(nil, &x)
 }
 
 // non-static calls should be ignored.
@@ -321,6 +349,9 @@ func nonStaticCalls() {
 
 	decodeMS := mapstructure.Decode
 	decodeMS(nil, &x)
+
+	marshalCustom := custom.Marshal
+	marshalCustom(x)
 }
 
 // non-struct argument calls should be ignored.
@@ -355,4 +386,7 @@ func nonStructArgument() {
 	mapstructure.DecodeMetadata(nil, &[]int{}, nil)
 	mapstructure.WeakDecode(nil, &map[int]int{})
 	mapstructure.WeakDecodeMetadata(nil, &map[int]int{}, nil)
+
+	custom.Marshal(0)
+	custom.Unmarshal(nil, &[]int{})
 }
