@@ -2,6 +2,7 @@ package musttag
 
 import (
 	"go/token"
+	"io"
 	"path"
 	"strings"
 	"testing"
@@ -10,7 +11,7 @@ import (
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
-func TestAll(t *testing.T) {
+func TestAnalyzer(t *testing.T) {
 	// NOTE(junk1tm): analysistest isn't aware of the main package's modules
 	// (see https://github.com/golang/go/issues/37054), so to run tests with
 	// external dependencies we have to be creative. Using vendor with symlinks
@@ -48,6 +49,34 @@ func TestAll(t *testing.T) {
 
 		testdata := analysistest.TestData()
 		analysistest.Run(t, testdata, analyzer, "tests")
+	})
+}
+
+func TestFlags(t *testing.T) {
+	analyzer := New()
+	analyzer.Flags.SetOutput(io.Discard)
+
+	t.Run("ok", func(t *testing.T) {
+		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:0"})
+		if err != nil {
+			t.Errorf("got %v; want no error", err)
+		}
+	})
+
+	t.Run("invalid format", func(t *testing.T) {
+		const want = `invalid value "test.Test" for flag -fn: invalid syntax`
+		err := analyzer.Flags.Parse([]string{"-fn=test.Test"})
+		if got := err.Error(); got != want {
+			t.Errorf("got %q; want %q", got, want)
+		}
+	})
+
+	t.Run("non-number argpos", func(t *testing.T) {
+		const want = `invalid value "test.Test:test:-" for flag -fn: strconv.Atoi: parsing "-": invalid syntax`
+		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:-"})
+		if got := err.Error(); got != want {
+			t.Errorf("got %q; want %q", got, want)
+		}
 	})
 }
 

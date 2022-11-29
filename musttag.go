@@ -2,9 +2,7 @@
 package musttag
 
 import (
-	"errors"
 	"flag"
-	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -72,12 +70,12 @@ func flags(funcs *[]Func) flag.FlagSet {
 	fs := flag.NewFlagSet("musttag", flag.ContinueOnError)
 	fs.Func("fn", "report custom function (name:tag:argpos)", func(s string) error {
 		parts := strings.Split(s, ":")
-		if len(parts) != 3 {
-			return errors.New("-fn: invalid format")
+		if len(parts) != 3 || parts[0] == "" || parts[1] == "" {
+			return strconv.ErrSyntax
 		}
 		pos, err := strconv.Atoi(parts[2])
 		if err != nil {
-			return fmt.Errorf("parsing argpos: %w", err)
+			return err
 		}
 		*funcs = append(*funcs, Func{
 			Name:   parts[0],
