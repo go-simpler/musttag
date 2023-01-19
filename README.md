@@ -45,9 +45,21 @@ The rational from [Uber Style Guide][1]:
 
 ## 📦 Install
 
+### Go
+
 ```shell
 go install github.com/junk1tm/musttag/cmd/musttag@latest
 ```
+
+### Brew
+
+```shell
+brew install junk1tm/tap/musttag
+```
+
+### Manual
+
+Download a prebuilt binary from the [Releases][2] page.
 
 ## 📋 Usage
 
@@ -78,3 +90,4 @@ musttag -fn="github.com/jmoiron/sqlx.Get:db:1" ./...
 ```
 
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
+[2]: https://github.com/junk1tm/musttag/releases
