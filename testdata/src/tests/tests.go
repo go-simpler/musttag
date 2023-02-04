@@ -285,6 +285,85 @@ func nestedAnonymousType() {
 	custom.Unmarshal(nil, &x)
 }
 
+// embedded types should not be reported.
+func embeddedType() {
+    type Y struct { /* want
+        `\Qjson.Marshal`
+        `\Qjson.MarshalIndent`
+        `\Qjson.Unmarshal`
+        `\Qjson.Encoder.Encode`
+        `\Qjson.Decoder.Decode`
+
+        `\Qxml.Marshal`
+        `\Qxml.MarshalIndent`
+        `\Qxml.Unmarshal`
+        `\Qxml.Encoder.Encode`
+        `\Qxml.Decoder.Decode`
+        `\Qxml.Encoder.EncodeElement`
+        `\Qxml.Decoder.DecodeElement`
+
+        `\Qyaml.v3.Marshal`
+        `\Qyaml.v3.Unmarshal`
+        `\Qyaml.v3.Encoder.Encode`
+        `\Qyaml.v3.Decoder.Decode`
+
+        `\Qtoml.Unmarshal`
+        `\Qtoml.Decode`
+        `\Qtoml.DecodeFS`
+        `\Qtoml.DecodeFile`
+        `\Qtoml.Encoder.Encode`
+        `\Qtoml.Decoder.Decode`
+
+        `\Qmapstructure.Decode`
+        `\Qmapstructure.DecodeMetadata`
+        `\Qmapstructure.WeakDecode`
+        `\Qmapstructure.WeakDecodeMetadata`
+
+        `\Qcustom.Marshal`
+        `\Qcustom.Unmarshal` */
+        NoTag int
+    }
+
+    var x struct {
+        Y
+        Z int `json:"z" xml:"z" yaml:"z" toml:"z" mapstructure:"z" custom:"z"`
+    }
+
+    json.Marshal(x)
+    json.MarshalIndent(x, "", "")
+    json.Unmarshal(nil, &x)
+    json.NewEncoder(nil).Encode(x)
+    json.NewDecoder(nil).Decode(&x)
+
+    xml.Marshal(x)
+    xml.MarshalIndent(x, "", "")
+    xml.Unmarshal(nil, &x)
+    xml.NewEncoder(nil).Encode(x)
+    xml.NewDecoder(nil).Decode(&x)
+    xml.NewEncoder(nil).EncodeElement(x, xmlSE)
+    xml.NewDecoder(nil).DecodeElement(&x, &xmlSE)
+
+    yaml.Marshal(x)
+    yaml.Unmarshal(nil, &x)
+    yaml.NewEncoder(nil).Encode(x)
+    yaml.NewDecoder(nil).Decode(&x)
+
+    toml.Unmarshal(nil, &x)
+    toml.Decode("", &x)
+    toml.DecodeFS(nil, "", &x)
+    toml.DecodeFile("", &x)
+    toml.NewEncoder(nil).Encode(x)
+    toml.NewDecoder(nil).Decode(&x)
+
+    mapstructure.Decode(nil, &x)
+    mapstructure.DecodeMetadata(nil, &x, nil)
+    mapstructure.WeakDecode(nil, &x)
+    mapstructure.WeakDecodeMetadata(nil, &x, nil)
+
+    custom.Marshal(x)
+    custom.Unmarshal(nil, &x)
+}
+
 // all good, nothing to report.
 func typeWithAllTags() {
 	var x struct {
