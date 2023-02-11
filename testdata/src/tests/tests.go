@@ -469,6 +469,11 @@ func nonStructArgument() {
 	custom.Unmarshal(nil, &[]int{})
 }
 
+// test for panic with nil object issue: https://github.com/junk1tm/musttag/issues/20
+func nilObject() {
+	json.Marshal(nil)
+}
+
 // test for stack overflow issue: https://github.com/junk1tm/musttag/issues/16
 func selfType() {
 	type Human struct {
