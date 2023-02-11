@@ -160,6 +160,9 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 		initialPos := token.NoPos
 		switch arg := arg.(type) {
 		case *ast.Ident: // e.g. json.Marshal(foo)
+			if arg.Obj == nil {
+				return // e.g. json.Marshal(nil)
+			}
 			initialPos = arg.Obj.Pos()
 		case *ast.CompositeLit: // e.g. json.Marshal(struct{}{})
 			initialPos = arg.Pos()

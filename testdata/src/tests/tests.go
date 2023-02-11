@@ -468,3 +468,8 @@ func nonStructArgument() {
 	custom.Marshal(0)
 	custom.Unmarshal(nil, &[]int{})
 }
+
+// test for panic with nil object issue: https://github.com/junk1tm/musttag/issues/20
+func nilObject() {
+	json.Marshal(nil)
+}
