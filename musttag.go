@@ -174,7 +174,7 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 			return // not a struct argument.
 		}
 
-		reportPos, ok := checkStruct(s, fn.Tag)
+		reportPos, ok := checkStruct(s, fn.Tag, make(map[string]struct{}))
 		if ok {
 			return // nothing to report.
 		}
@@ -225,7 +225,8 @@ func parseStruct(t types.Type, pos token.Pos) (*structInfo, bool) {
 
 // checkStruct recursively checks the given struct and returns the position for report,
 // in case one of its fields is missing the tag.
-func checkStruct(s *structInfo, tag string) (token.Pos, bool) {
+func checkStruct(s *structInfo, tag string, visited map[string]struct{}) (token.Pos, bool) {
+	visited[s.String()] = struct{}{}
 	for i := 0; i < s.NumFields(); i++ {
 		if !s.Field(i).Exported() {
 			continue
@@ -241,7 +242,10 @@ func checkStruct(s *structInfo, tag string) (token.Pos, bool) {
 		if !ok {
 			continue
 		}
-		if pos, ok := checkStruct(nested, tag); !ok {
+		if _, ok := visited[nested.String()]; ok {
+			continue
+		}
+		if pos, ok := checkStruct(nested, tag, visited); !ok {
 			return pos, false
 		}
 	}

@@ -473,3 +473,14 @@ func nonStructArgument() {
 func nilObject() {
 	json.Marshal(nil)
 }
+
+// test for stack overflow issue: https://github.com/junk1tm/musttag/issues/16
+func selfType() {
+	type Human struct {
+		Mom      *Human   `json:"mom"`
+		Dad      *Human   `json:"dad"`
+		Children []*Human `json:"children"`
+	}
+	var v *Human
+	json.Marshal(v)
+}
