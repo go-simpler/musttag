@@ -23,63 +23,6 @@ type Func struct {
 	ArgPos int    // ArgPos is the position of the argument to check.
 }
 
-// builtin is a set of functions supported out of the box.
-var builtin = []Func{
-	{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 0},
-	{Name: "encoding/json.MarshalIndent", Tag: "json", ArgPos: 0},
-	{Name: "encoding/json.Unmarshal", Tag: "json", ArgPos: 1},
-	{Name: "(*encoding/json.Encoder).Encode", Tag: "json", ArgPos: 0},
-	{Name: "(*encoding/json.Decoder).Decode", Tag: "json", ArgPos: 0},
-
-	{Name: "encoding/xml.Marshal", Tag: "xml", ArgPos: 0},
-	{Name: "encoding/xml.MarshalIndent", Tag: "xml", ArgPos: 0},
-	{Name: "encoding/xml.Unmarshal", Tag: "xml", ArgPos: 1},
-	{Name: "(*encoding/xml.Encoder).Encode", Tag: "xml", ArgPos: 0},
-	{Name: "(*encoding/xml.Decoder).Decode", Tag: "xml", ArgPos: 0},
-	{Name: "(*encoding/xml.Encoder).EncodeElement", Tag: "xml", ArgPos: 0},
-	{Name: "(*encoding/xml.Decoder).DecodeElement", Tag: "xml", ArgPos: 0},
-
-	{Name: "gopkg.in/yaml.v3.Marshal", Tag: "yaml", ArgPos: 0},
-	{Name: "gopkg.in/yaml.v3.Unmarshal", Tag: "yaml", ArgPos: 1},
-	{Name: "(*gopkg.in/yaml.v3.Encoder).Encode", Tag: "yaml", ArgPos: 0},
-	{Name: "(*gopkg.in/yaml.v3.Decoder).Decode", Tag: "yaml", ArgPos: 0},
-
-	{Name: "github.com/BurntSushi/toml.Unmarshal", Tag: "toml", ArgPos: 1},
-	{Name: "github.com/BurntSushi/toml.Decode", Tag: "toml", ArgPos: 1},
-	{Name: "github.com/BurntSushi/toml.DecodeFS", Tag: "toml", ArgPos: 2},
-	{Name: "github.com/BurntSushi/toml.DecodeFile", Tag: "toml", ArgPos: 1},
-	{Name: "(*github.com/BurntSushi/toml.Encoder).Encode", Tag: "toml", ArgPos: 0},
-	{Name: "(*github.com/BurntSushi/toml.Decoder).Decode", Tag: "toml", ArgPos: 0},
-
-	{Name: "github.com/mitchellh/mapstructure.Decode", Tag: "mapstructure", ArgPos: 1},
-	{Name: "github.com/mitchellh/mapstructure.DecodeMetadata", Tag: "mapstructure", ArgPos: 1},
-	{Name: "github.com/mitchellh/mapstructure.WeakDecode", Tag: "mapstructure", ArgPos: 1},
-	{Name: "github.com/mitchellh/mapstructure.WeakDecodeMetadata", Tag: "mapstructure", ArgPos: 1},
-}
-
-// flags creates a flag set for the analyzer.
-// The funcs slice will be filled with custom functions passed via CLI flags.
-func flags(funcs *[]Func) flag.FlagSet {
-	fs := flag.NewFlagSet("musttag", flag.ContinueOnError)
-	fs.Func("fn", "report custom function (name:tag:argpos)", func(s string) error {
-		parts := strings.Split(s, ":")
-		if len(parts) != 3 || parts[0] == "" || parts[1] == "" {
-			return strconv.ErrSyntax
-		}
-		pos, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return err
-		}
-		*funcs = append(*funcs, Func{
-			Name:   parts[0],
-			Tag:    parts[1],
-			ArgPos: pos,
-		})
-		return nil
-	})
-	return *fs
-}
-
 // New creates a new musttag analyzer.
 // To report a custom function provide its description via Func,
 // it will be added to the builtin ones.
@@ -104,6 +47,29 @@ func New(funcs ...Func) *analysis.Analyzer {
 			return run(pass, m)
 		},
 	}
+}
+
+// flags creates a flag set for the analyzer.
+// The funcs slice will be filled with custom functions passed via CLI flags.
+func flags(funcs *[]Func) flag.FlagSet {
+	fs := flag.NewFlagSet("musttag", flag.ContinueOnError)
+	fs.Func("fn", "report custom function (name:tag:argpos)", func(s string) error {
+		parts := strings.Split(s, ":")
+		if len(parts) != 3 || parts[0] == "" || parts[1] == "" {
+			return strconv.ErrSyntax
+		}
+		pos, err := strconv.Atoi(parts[2])
+		if err != nil {
+			return err
+		}
+		*funcs = append(*funcs, Func{
+			Name:   parts[0],
+			Tag:    parts[1],
+			ArgPos: pos,
+		})
+		return nil
+	})
+	return *fs
 }
 
 // for tests only.
