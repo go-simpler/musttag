@@ -21,6 +21,8 @@ func TestAnalyzer(t *testing.T) {
 	// functions signatures to match) and to put them exactly at
 	// testdata/src/path/to/pkg (GOPATH?), otherwise it won't work.
 
+	testPackages = []string{"tests", "examples"}
+
 	analyzer := New(
 		Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
 		Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
