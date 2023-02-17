@@ -9,10 +9,6 @@ import (
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/analysistest"
-
-	// those are required as dependencies for `analysistest` to run.
-	_ "github.com/junk1tm/musttag/testdata/src/examples"
-	_ "github.com/junk1tm/musttag/testdata/src/tests"
 )
 
 func TestAnalyzer(t *testing.T) {
@@ -24,6 +20,8 @@ func TestAnalyzer(t *testing.T) {
 	// stubs of the dependencies (we don't need the actual code, only the
 	// functions signatures to match) and to put them exactly at
 	// testdata/src/path/to/pkg (GOPATH?), otherwise it won't work.
+
+	testPackages = []string{"tests", "examples"}
 
 	analyzer := New(
 		Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},

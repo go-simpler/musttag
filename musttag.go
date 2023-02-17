@@ -82,6 +82,11 @@ var (
 		// TODO(junk1tm): print the name of the struct type as well?
 		pass.Reportf(pos, "exported fields should be annotated with the %q tag", fn.Tag)
 	}
+
+	// HACK(junk1tm): mainModulePackages() does not return packages from `testdata`,
+	// because it is ignored by the `go list` command.
+	// For tests to pass we need add these packages manually.
+	testPackages []string
 )
 
 // run starts the analysis.
@@ -89,6 +94,9 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 	mainModule, err := mainModulePackages()
 	if err != nil {
 		return nil, err
+	}
+	for _, pkg := range testPackages {
+		mainModule[pkg] = struct{}{}
 	}
 
 	// store previous reports to prevent reporting
