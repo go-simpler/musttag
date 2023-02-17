@@ -86,13 +86,17 @@ var (
 
 // run starts the analysis.
 func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
-	type report struct {
-		pos token.Pos // the position for report.
-		tag string    // the missing struct tag.
+	mainModule, err := mainModulePackages()
+	if err != nil {
+		return nil, err
 	}
 
 	// store previous reports to prevent reporting
 	// the same struct more than once (if reportOnce is true).
+	type report struct {
+		pos token.Pos // the position for report.
+		tag string    // the missing struct tag.
+	}
 	reports := make(map[report]struct{})
 
 	walk := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -104,12 +108,12 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 			return // not a function call.
 		}
 
-		callee := typeutil.StaticCallee(pass.TypesInfo, call)
-		if callee == nil {
+		caller := typeutil.StaticCallee(pass.TypesInfo, call)
+		if caller == nil {
 			return // not a static call.
 		}
 
-		fn, ok := funcs[callee.FullName()]
+		fn, ok := funcs[caller.FullName()]
 		if !ok {
 			return // the function is not supported.
 		}
@@ -134,40 +138,50 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 			initialPos = arg.Pos()
 		}
 
+		checker := checker{
+			mainModule: mainModule,
+			seenTypes:  make(map[string]struct{}),
+		}
+
 		t := pass.TypesInfo.TypeOf(arg)
-		s, ok := parseStruct(t, initialPos)
+		st, ok := checker.parseStructType(t, initialPos)
 		if !ok {
 			return // not a struct argument.
 		}
 
-		reportPos, ok := checkStruct(s, fn.Tag, make(map[string]struct{}))
+		result, ok := checker.checkStructType(st, fn.Tag)
 		if ok {
 			return // nothing to report.
 		}
 
-		r := report{reportPos, fn.Tag}
+		r := report{result.Pos, fn.Tag}
 		if _, ok := reports[r]; ok && reportOnce {
 			return // already reported.
 		}
 
-		reportf(pass, reportPos, fn)
+		reportf(pass, result.Pos, fn)
 		reports[r] = struct{}{}
 	})
 
 	return nil, nil
 }
 
-// structInfo expands types.Struct with its position in the source code.
-// If the struct is anonymous, Pos points to the corresponding identifier.
-type structInfo struct {
+// structType is an extension for types.Struct.
+// The content of the fields depends on whether the type is named or not.
+type structType struct {
 	*types.Struct
-	Pos token.Pos
+	Name string    // for types.Named: the type's name; for anonymous: a placeholder string.
+	Pos  token.Pos // for types.Named: the type's position; for anonymous: the corresponding identifier's position.
 }
 
-// parseStruct parses the given types.Type, returning the underlying struct type.
-// If it's a named type, the result will contain the position of its declaration,
-// or the given token.Pos otherwise.
-func parseStruct(t types.Type, pos token.Pos) (*structInfo, bool) {
+// checker parses and checks struct types.
+type checker struct {
+	mainModule map[string]struct{} // do not check types outside of the main module; see issue #17.
+	seenTypes  map[string]struct{} // prevent panic on recursive types; see issue #16.
+}
+
+// parseStructType parses the given types.Type, returning the underlying struct type.
+func (c *checker) parseStructType(t types.Type, pos token.Pos) (*structType, bool) {
 	for {
 		// unwrap pointers (if any) first.
 		ptr, ok := t.(*types.Pointer)
@@ -179,42 +193,60 @@ func parseStruct(t types.Type, pos token.Pos) (*structInfo, bool) {
 
 	switch t := t.(type) {
 	case *types.Named: // a struct of the named type.
-		if s, ok := t.Underlying().(*types.Struct); ok {
-			return &structInfo{Struct: s, Pos: t.Obj().Pos()}, true
+		pkg := t.Obj().Pkg().Path()
+		if _, ok := c.mainModule[pkg]; !ok {
+			return nil, false
 		}
+		s, ok := t.Underlying().(*types.Struct)
+		if !ok {
+			return nil, false
+		}
+		return &structType{
+			Struct: s,
+			Pos:    t.Obj().Pos(),
+			Name:   t.Obj().Name(),
+		}, true
+
 	case *types.Struct: // an anonymous struct.
-		return &structInfo{Struct: t, Pos: pos}, true
+		return &structType{
+			Struct: t,
+			Pos:    pos,
+			Name:   "{anonymous struct}",
+		}, true
 	}
 
 	return nil, false
 }
 
-// checkStruct recursively checks the given struct and returns the position for report,
-// in case one of its fields is missing the tag.
-func checkStruct(s *structInfo, tag string, visited map[string]struct{}) (token.Pos, bool) {
-	visited[s.String()] = struct{}{}
-	for i := 0; i < s.NumFields(); i++ {
-		if !s.Field(i).Exported() {
+// checkStructType recursively checks whether the given struct type is annotated with the tag.
+// The result is the type of the first nested struct which fields are not properly annotated.
+func (c *checker) checkStructType(st *structType, tag string) (*structType, bool) {
+	c.seenTypes[st.String()] = struct{}{}
+
+	for i := 0; i < st.NumFields(); i++ {
+		field := st.Field(i)
+		if !field.Exported() {
 			continue
 		}
 
-		st := reflect.StructTag(s.Tag(i))
-		if _, ok := st.Lookup(tag); !ok && !s.Field(i).Embedded() {
-			return s.Pos, false
+		if _, ok := reflect.StructTag(st.Tag(i)).Lookup(tag); !ok {
+			// tag is not required for embedded types; see issue #12.
+			if !field.Embedded() {
+				return st, false
+			}
 		}
 
-		t := s.Field(i).Type()
-		nested, ok := parseStruct(t, s.Pos) // TODO(junk1tm): or s.Field(i).Pos()?
+		nested, ok := c.parseStructType(field.Type(), st.Pos) // TODO(junk1tm): or field.Pos()?
 		if !ok {
 			continue
 		}
-		if _, ok := visited[nested.String()]; ok {
+		if _, ok := c.seenTypes[nested.String()]; ok {
 			continue
 		}
-		if pos, ok := checkStruct(nested, tag, visited); !ok {
-			return pos, false
+		if result, ok := c.checkStructType(nested, tag); !ok {
+			return result, false
 		}
 	}
 
-	return token.NoPos, true
+	return nil, true
 }
