@@ -9,6 +9,10 @@ import (
 
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/analysistest"
+
+	// those are required as dependencies for `analysistest` to run.
+	_ "github.com/junk1tm/musttag/testdata/src/examples"
+	_ "github.com/junk1tm/musttag/testdata/src/tests"
 )
 
 func TestAnalyzer(t *testing.T) {

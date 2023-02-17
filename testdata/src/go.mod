@@ -1,6 +1,6 @@
-module testdata
+module github.com/junk1tm/musttag/testdata/src
 
-go 1.18
+go 1.19
 
 require (
 	example.com/custom v0.0.0
