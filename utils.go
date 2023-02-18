@@ -27,6 +27,7 @@ func mainModulePackages() (map[string]struct{}, error) {
 	m := make(map[string]struct{}, len(list))
 	for _, pkg := range strings.Split(list, "\n") {
 		m[pkg] = struct{}{}
+		m[pkg+"_test"] = struct{}{} // `*_test` packages belong to the main module, see issue #24.
 	}
 
 	return m, nil
