@@ -96,7 +96,7 @@ func prepareTestFiles(t *testing.T) {
 
 	hardlink := func(dir, file string) {
 		target := filepath.Join(testdata, "src", dir, file)
-		if err := os.MkdirAll(filepath.Dir(target), 0777); err != nil {
+		if err := os.MkdirAll(filepath.Dir(target), 0o777); err != nil {
 			t.Fatal(err)
 		}
 		if err := os.Link(filepath.Join(testdata, file), target); err != nil {
@@ -108,10 +108,10 @@ func prepareTestFiles(t *testing.T) {
 
 	for file, data := range stubs {
 		target := filepath.Join(testdata, "src", file)
-		if err := os.MkdirAll(filepath.Dir(target), 0777); err != nil {
+		if err := os.MkdirAll(filepath.Dir(target), 0o777); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(target, []byte(data), 0666); err != nil {
+		if err := os.WriteFile(target, []byte(data), 0o666); err != nil {
 			t.Fatal(err)
 		}
 	}
