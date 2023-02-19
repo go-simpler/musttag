@@ -18,17 +18,16 @@ func TestAnalyzer(t *testing.T) {
 	// So, to be able to run tests with external dependencies,
 	// we first need to write a GOPATH-like tree of stubs.
 	prepareTestFiles(t)
-
-	testPackages = []string{"tests", "examples"}
+	testPackage = "tests"
 
 	analyzer := New(
 		Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
 		Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
 	)
 
-	t.Run("examples", func(t *testing.T) {
+	t.Run("builtins", func(t *testing.T) {
 		testdata := analysistest.TestData()
-		analysistest.Run(t, testdata, analyzer, "examples")
+		analysistest.Run(t, testdata, analyzer, "builtins")
 	})
 
 	t.Run("tests", func(t *testing.T) {
@@ -104,7 +103,7 @@ func prepareTestFiles(t *testing.T) {
 		}
 	}
 	hardlink("tests", "tests.go")
-	hardlink("examples", "examples.go")
+	hardlink("builtins", "builtins.go")
 
 	for file, data := range stubs {
 		target := filepath.Join(testdata, "src", file)

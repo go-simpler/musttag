@@ -34,14 +34,14 @@ func New(funcs ...Func) *analysis.Analyzer {
 		Flags:    flags(&flagFuncs),
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 		Run: func(pass *analysis.Pass) (any, error) {
-			l := len(builtin) + len(funcs) + len(flagFuncs)
+			l := len(builtins) + len(funcs) + len(flagFuncs)
 			m := make(map[string]Func, l)
 			toMap := func(slice []Func) {
 				for _, fn := range slice {
 					m[fn.Name] = fn
 				}
 			}
-			toMap(builtin)
+			toMap(builtins)
 			toMap(funcs)
 			toMap(flagFuncs)
 			return run(pass, m)
@@ -84,9 +84,9 @@ var (
 	}
 
 	// HACK(junk1tm): mainModulePackages() does not return packages from `testdata`,
-	// because it is ignored by the `go list` command.
-	// For tests to pass we need add these packages manually.
-	testPackages []string
+	// because it is ignored by the go tool, and thus, by the `go list` command.
+	// For tests to pass we need to add the package with tests to the main module manually.
+	testPackage string
 )
 
 // run starts the analysis.
@@ -95,8 +95,8 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, pkg := range testPackages {
-		mainModule[pkg] = struct{}{}
+	if testPackage != "" {
+		mainModule[testPackage] = struct{}{}
 	}
 
 	// store previous reports to prevent reporting
