@@ -1,7 +1,7 @@
 package musttag
 
-// builtin is a set of functions supported out of the box.
-var builtin = []Func{
+// builtins is a set of functions supported out of the box.
+var builtins = []Func{
 	// https://pkg.go.dev/encoding/json
 	{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 0},
 	{Name: "encoding/json.MarshalIndent", Tag: "json", ArgPos: 0},
