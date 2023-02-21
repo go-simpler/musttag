@@ -1,4 +1,4 @@
-package tests
+package builtins
 
 import (
 	"encoding/json"
@@ -13,11 +13,20 @@ import (
 
 // TODO(junk1tm): drop `reportOnce` and test each builtin function.
 
+type User struct { /* want
+	"`User` should be annotated with the `json` tag as it is passed to `json.Marshal` at testdata/src/builtins/builtins.go"
+	"`User` should be annotated with the `xml` tag as it is passed to `xml.Marshal` at testdata/src/builtins/builtins.go"
+	"`User` should be annotated with the `yaml` tag as it is passed to `yaml.v3.Marshal` at testdata/src/builtins/builtins.go"
+	"`User` should be annotated with the `toml` tag as it is passed to `toml.Unmarshal` at testdata/src/builtins/builtins.go"
+	"`User` should be annotated with the `mapstructure` tag as it is passed to `mapstructure.Decode` at testdata/src/builtins/builtins.go"
+	"`User` should be annotated with the `custom` tag as it is passed to `custom.Marshal` at testdata/src/builtins/builtins.go"
+	*/
+	Name  string
+	Email string `json:"email" xml:"email" yaml:"email" toml:"email" mapstructure:"email" custom:"email"`
+}
+
 func testJSON() {
-	var user struct { // want `exported fields should be annotated with the "json" tag`
-		Name  string
-		Email string `json:"email"`
-	}
+	var user User
 	json.Marshal(user)
 	json.MarshalIndent(user, "", "")
 	json.Unmarshal(nil, &user)
@@ -26,10 +35,7 @@ func testJSON() {
 }
 
 func testXML() {
-	var user struct { // want `exported fields should be annotated with the "xml" tag`
-		Name  string
-		Email string `xml:"email"`
-	}
+	var user User
 	xml.Marshal(user)
 	xml.MarshalIndent(user, "", "")
 	xml.Unmarshal(nil, &user)
@@ -40,10 +46,7 @@ func testXML() {
 }
 
 func testYAML() {
-	var user struct { // want `exported fields should be annotated with the "yaml" tag`
-		Name  string
-		Email string `yaml:"email"`
-	}
+	var user User
 	yaml.Marshal(user)
 	yaml.Unmarshal(nil, &user)
 	yaml.NewEncoder(nil).Encode(user)
@@ -51,10 +54,7 @@ func testYAML() {
 }
 
 func testTOML() {
-	var user struct { // want `exported fields should be annotated with the "toml" tag`
-		Name  string
-		Email string `toml:"email"`
-	}
+	var user User
 	toml.Unmarshal(nil, &user)
 	toml.Decode("", &user)
 	toml.DecodeFS(nil, "", &user)
@@ -64,10 +64,7 @@ func testTOML() {
 }
 
 func testMapstructure() {
-	var user struct { // want `exported fields should be annotated with the "mapstructure" tag`
-		Name  string
-		Email string `mapstructure:"email"`
-	}
+	var user User
 	mapstructure.Decode(nil, &user)
 	mapstructure.DecodeMetadata(nil, &user, nil)
 	mapstructure.WeakDecode(nil, &user)
@@ -75,10 +72,7 @@ func testMapstructure() {
 }
 
 func testCustom() {
-	var user struct { // want `exported fields should be annotated with the "custom" tag`
-		Name  string
-		Email string `custom:"email"`
-	}
+	var user User
 	custom.Marshal(user)
 	custom.Unmarshal(nil, &user)
 }
