@@ -6,6 +6,8 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
+	"path"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -21,6 +23,11 @@ type Func struct {
 	Name   string // Name is the full name of the function, including the package.
 	Tag    string // Tag is the struct tag whose presence should be ensured.
 	ArgPos int    // ArgPos is the position of the argument to check.
+}
+
+func (fn Func) shortName() string {
+	name := strings.NewReplacer("*", "", "(", "", ")", "").Replace(fn.Name)
+	return path.Base(name)
 }
 
 // New creates a new musttag analyzer.
@@ -77,26 +84,25 @@ var (
 	// should the same struct be reported only once for the same tag?
 	reportOnce = true
 
-	// reportf is a wrapper for pass.Reportf (as a variable, so it could be mocked in tests).
-	reportf = func(pass *analysis.Pass, pos token.Pos, fn Func) {
-		// TODO(junk1tm): print the name of the struct type as well?
-		pass.Reportf(pos, "exported fields should be annotated with the %q tag", fn.Tag)
+	reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
+		const format = "`%s` should be annotated with the `%s` tag as it is passed to `%s` at %s"
+		pass.Reportf(st.Pos, format, st.Name, fn.Tag, fn.shortName(), fnPos)
 	}
 
 	// HACK(junk1tm): mainModulePackages() does not return packages from `testdata`,
 	// because it is ignored by the go tool, and thus, by the `go list` command.
-	// For tests to pass we need to add the package with tests to the main module manually.
-	testPackage string
+	// For tests to pass we need to add the packages with tests to the main module manually.
+	testPackages []string
 )
 
 // run starts the analysis.
 func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
-	mainModule, err := mainModulePackages()
+	moduleDir, modulePackages, err := mainModule()
 	if err != nil {
 		return nil, err
 	}
-	if testPackage != "" {
-		mainModule[testPackage] = struct{}{}
+	for _, pkg := range testPackages {
+		modulePackages[pkg] = struct{}{}
 	}
 
 	// store previous reports to prevent reporting
@@ -147,7 +153,7 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 		}
 
 		checker := checker{
-			mainModule: mainModule,
+			mainModule: modulePackages,
 			seenTypes:  make(map[string]struct{}),
 		}
 
@@ -167,7 +173,9 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 			return // already reported.
 		}
 
-		reportf(pass, result.Pos, fn)
+		p := pass.Fset.Position(call.Pos())
+		p.Filename, _ = filepath.Rel(moduleDir, p.Filename)
+		reportf(pass, result, fn, p)
 		reports[r] = struct{}{}
 	})
 
@@ -219,7 +227,7 @@ func (c *checker) parseStructType(t types.Type, pos token.Pos) (*structType, boo
 		return &structType{
 			Struct: t,
 			Pos:    pos,
-			Name:   "{anonymous struct}",
+			Name:   "anonymous struct",
 		}, true
 	}
 

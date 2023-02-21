@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
@@ -18,7 +17,7 @@ func TestAnalyzer(t *testing.T) {
 	// So, to be able to run tests with external dependencies,
 	// we first need to write a GOPATH-like tree of stubs.
 	prepareTestFiles(t)
-	testPackage = "tests"
+	testPackages = []string{"tests", "builtins"}
 
 	analyzer := New(
 		Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
@@ -26,26 +25,21 @@ func TestAnalyzer(t *testing.T) {
 	)
 
 	t.Run("builtins", func(t *testing.T) {
+		original := reportf
+		reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
+			fnPos.Line = 0 // it's annoying to fix line numbers expectations when a new line is added.
+			original(pass, st, fn, fnPos)
+		}
 		testdata := analysistest.TestData()
 		analysistest.Run(t, testdata, analyzer, "builtins")
 	})
 
 	t.Run("tests", func(t *testing.T) {
-		original := struct {
-			reportOnce bool
-			reportf    func(pass *analysis.Pass, pos token.Pos, fn Func)
-		}{
-			reportOnce: reportOnce,
-			reportf:    reportf,
-		}
-		defer func() { reportOnce, reportf = original.reportOnce, original.reportf }()
-
 		// for the tests we want to record reports from all functions.
 		reportOnce = false
-		reportf = func(pass *analysis.Pass, pos token.Pos, fn Func) {
-			pass.Reportf(pos, shortName(fn.Name))
+		reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
+			pass.Reportf(st.Pos, fn.shortName())
 		}
-
 		testdata := analysistest.TestData()
 		analysistest.Run(t, testdata, analyzer, "tests")
 	})
@@ -77,13 +71,6 @@ func TestFlags(t *testing.T) {
 			t.Errorf("got %q; want %q", got, want)
 		}
 	})
-}
-
-func shortName(name string) string {
-	name = strings.ReplaceAll(name, "*", "")
-	name = strings.ReplaceAll(name, "(", "")
-	name = strings.ReplaceAll(name, ")", "")
-	return filepath.Base(name)
 }
 
 func prepareTestFiles(t *testing.T) {

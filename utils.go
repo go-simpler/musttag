@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// mainModulePackages returns a set of packages that belong to the main module.
-func mainModulePackages() (map[string]struct{}, error) {
+// mainModule returns the directory and the set of packages of the main module.
+func mainModule() (dir string, packages map[string]struct{}, _ error) {
 	// https://pkg.go.dev/cmd/go#hdr-Package_lists_and_patterns
 	// > When using modules, "all" expands to all packages in the main module
 	// > and their dependencies, including dependencies needed by tests of any of those.
@@ -20,15 +20,21 @@ func mainModulePackages() (map[string]struct{}, error) {
 
 	out, err := exec.Command(cmd[0], cmd[1:]...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("running go list: %w", err)
+		return "", nil, fmt.Errorf("running `go list all`: %w", err)
 	}
 
 	list := strings.TrimSpace(string(out))
-	m := make(map[string]struct{}, len(list))
+	packages = make(map[string]struct{}, len(list))
 	for _, pkg := range strings.Split(list, "\n") {
-		m[pkg] = struct{}{}
-		m[pkg+"_test"] = struct{}{} // `*_test` packages belong to the main module, see issue #24.
+		packages[pkg] = struct{}{}
+		packages[pkg+"_test"] = struct{}{} // `*_test` packages belong to the main module, see issue #24.
 	}
 
-	return m, nil
+	out, err = exec.Command("go", "list", "-m", "-f={{.Dir}}").Output()
+	if err != nil {
+		return "", nil, fmt.Errorf("running `go list -m`: %w", err)
+	}
+
+	dir = strings.TrimSpace(string(out))
+	return dir, packages, nil
 }
