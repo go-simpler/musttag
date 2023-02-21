@@ -25,18 +25,11 @@ func TestAnalyzer(t *testing.T) {
 	)
 
 	t.Run("builtins", func(t *testing.T) {
-		original := reportf
-		reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
-			fnPos.Line = 0 // it's annoying to fix line numbers expectations when a new line is added.
-			original(pass, st, fn, fnPos)
-		}
 		testdata := analysistest.TestData()
 		analysistest.Run(t, testdata, analyzer, "builtins")
 	})
 
 	t.Run("tests", func(t *testing.T) {
-		// for the tests we want to record reports from all functions.
-		reportOnce = false
 		reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
 			pass.Reportf(st.Pos, fn.shortName())
 		}
