@@ -81,9 +81,6 @@ func flags(funcs *[]Func) flag.FlagSet {
 
 // for tests only.
 var (
-	// should the same struct be reported only once for the same tag?
-	reportOnce = true
-
 	reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
 		const format = "`%s` should be annotated with the `%s` tag as it is passed to `%s` at %s"
 		pass.Reportf(st.Pos, format, st.Name, fn.Tag, fn.shortName(), fnPos)
@@ -104,14 +101,6 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 	for _, pkg := range testPackages {
 		modulePackages[pkg] = struct{}{}
 	}
-
-	// store previous reports to prevent reporting
-	// the same struct more than once (if reportOnce is true).
-	type report struct {
-		pos token.Pos // the position for report.
-		tag string    // the missing struct tag.
-	}
-	reports := make(map[report]struct{})
 
 	walk := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	filter := []ast.Node{(*ast.CallExpr)(nil)}
@@ -168,15 +157,9 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 			return // nothing to report.
 		}
 
-		r := report{result.Pos, fn.Tag}
-		if _, ok := reports[r]; ok && reportOnce {
-			return // already reported.
-		}
-
 		p := pass.Fset.Position(call.Pos())
 		p.Filename, _ = filepath.Rel(moduleDir, p.Filename)
 		reportf(pass, result, fn, p)
-		reports[r] = struct{}{}
 	})
 
 	return nil, nil
