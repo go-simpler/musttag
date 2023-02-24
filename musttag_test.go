@@ -40,7 +40,8 @@ func TestAnalyzer(t *testing.T) {
 
 func TestFlags(t *testing.T) {
 	analyzer := New()
-	analyzer.Flags.SetOutput(io.Discard) // TODO(junk1tm): does not work, the usage is still printed.
+	analyzer.Flags.Usage = func() {}
+	analyzer.Flags.SetOutput(io.Discard)
 
 	t.Run("ok", func(t *testing.T) {
 		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:0"})
