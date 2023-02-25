@@ -3,6 +3,7 @@ package musttag
 
 import (
 	"flag"
+	"fmt"
 	"go/ast"
 	"go/token"
 	"go/types"
@@ -81,7 +82,7 @@ func flags(funcs *[]Func) flag.FlagSet {
 
 // for tests only.
 var (
-	reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
+	report = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
 		const format = "`%s` should be annotated with the `%s` tag as it is passed to `%s` at %s"
 		pass.Reportf(st.Pos, format, st.Name, fn.Tag, fn.shortName(), fnPos)
 	}
@@ -106,6 +107,10 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 	filter := []ast.Node{(*ast.CallExpr)(nil)}
 
 	walk.Preorder(filter, func(n ast.Node) {
+		if err != nil {
+			return // there is already an error.
+		}
+
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
 			return // not a function call.
@@ -122,7 +127,8 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 		}
 
 		if len(call.Args) <= fn.ArgPos {
-			return // TODO(junk1tm): return a proper error.
+			err = fmt.Errorf("Func.ArgPos cannot be %d: %s accepts only %d argument(s)", fn.ArgPos, fn.Name, len(call.Args))
+			return
 		}
 
 		arg := call.Args[fn.ArgPos]
@@ -159,10 +165,10 @@ func run(pass *analysis.Pass, funcs map[string]Func) (any, error) {
 
 		p := pass.Fset.Position(call.Pos())
 		p.Filename, _ = filepath.Rel(moduleDir, p.Filename)
-		reportf(pass, result, fn, p)
+		report(pass, result, fn, p)
 	})
 
-	return nil, nil
+	return nil, err
 }
 
 // structType is an extension for types.Struct.
