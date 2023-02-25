@@ -19,22 +19,36 @@ func TestAnalyzer(t *testing.T) {
 	prepareTestFiles(t)
 	testPackages = []string{"tests", "builtins"}
 
-	analyzer := New(
-		Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
-		Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
-	)
+	testdata := analysistest.TestData()
+
+	t.Run("tests", func(t *testing.T) {
+		r := report
+		defer func() { report = r }()
+		report = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
+			pass.Reportf(st.Pos, fn.shortName())
+		}
+		analyzer := New()
+		analysistest.Run(t, testdata, analyzer, "tests")
+	})
 
 	t.Run("builtins", func(t *testing.T) {
-		testdata := analysistest.TestData()
+		analyzer := New(
+			Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
+			Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
+		)
 		analysistest.Run(t, testdata, analyzer, "builtins")
 	})
 
-	t.Run("tests", func(t *testing.T) {
-		reportf = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
-			pass.Reportf(st.Pos, fn.shortName())
+	t.Run("bad Func.ArgPos", func(t *testing.T) {
+		const want = `Func.ArgPos cannot be 10: encoding/json.Marshal accepts only 1 argument(s)`
+		analyzer := New(
+			// override the builtin function.
+			Func{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
+		)
+		result := analysistest.Run(nopT{}, testdata, analyzer, "tests")[0]
+		if got := result.Err.Error(); got != want {
+			t.Errorf("\ngot\t%s\nwant\t%s", got, want)
 		}
-		testdata := analysistest.TestData()
-		analysistest.Run(t, testdata, analyzer, "tests")
 	})
 }
 
@@ -46,7 +60,7 @@ func TestFlags(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:0"})
 		if err != nil {
-			t.Errorf("got %v; want no error", err)
+			t.Errorf("\ngot\t%s\nwant\tno error", err)
 		}
 	})
 
@@ -54,7 +68,7 @@ func TestFlags(t *testing.T) {
 		const want = `invalid value "test.Test" for flag -fn: invalid syntax`
 		err := analyzer.Flags.Parse([]string{"-fn=test.Test"})
 		if got := err.Error(); got != want {
-			t.Errorf("got %q; want %q", got, want)
+			t.Errorf("\ngot\t%s\nwant\t%s", got, want)
 		}
 	})
 
@@ -62,10 +76,14 @@ func TestFlags(t *testing.T) {
 		const want = `invalid value "test.Test:test:-" for flag -fn: strconv.Atoi: parsing "-": invalid syntax`
 		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:-"})
 		if got := err.Error(); got != want {
-			t.Errorf("got %q; want %q", got, want)
+			t.Errorf("\ngot\t%s\nwant\t%s", got, want)
 		}
 	})
 }
+
+type nopT struct{}
+
+func (nopT) Errorf(string, ...any) {}
 
 func prepareTestFiles(t *testing.T) {
 	testdata := analysistest.TestData()
