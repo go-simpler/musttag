@@ -34,42 +34,37 @@ The rational from [Uber Style Guide][1]:
 
 ## 🚀 Features
 
-`musttag` supports these packages out of the box:
+The following packages are supported out of the box:
 
-* `encoding/json`
-* `encoding/xml`
-* `gopkg.in/yaml.v3`
-* `github.com/BurntSushi/toml`
-* `github.com/mitchellh/mapstructure`
-* ...and any [custom one](#custom-packages)
+* [`encoding/json`][2]
+* [`encoding/xml`][3]
+* [`gopkg.in/yaml.v3`][4]
+* [`github.com/BurntSushi/toml`][5]
+* [`github.com/mitchellh/mapstructure`][6]
 
-## 📦 Install
+In addition, any [custom package](#custom-packages) can be added to the list.
 
-### Go
+## 📋 Usage
 
-```shell
-go install github.com/junk1tm/musttag/cmd/musttag@latest
+`musttag` is already integrated into `golangci-lint`, and this is the recommended way to use it.
+
+To enable the linter, add the following lines to `.golangci.yml`:
+
+```yaml
+linters:
+  enable:
+    - mustttag
 ```
 
-### Brew
+If you'd rather prefer to use `musttag` standalone, you can install it via `brew`...
 
 ```shell
 brew install junk1tm/tap/musttag
 ```
 
-### Manual
+...or download a prebuilt binary from the [Releases][8] page.
 
-Download a prebuilt binary from the [Releases][2] page.
-
-## 📋 Usage
-
-As a standalone binary:
-
-```shell
-musttag ./...
-```
-
-Via `go vet`:
+Then run it either directly or as a `go vet` tool:
 
 ```shell
 go vet -vettool=$(which musttag) ./...
@@ -77,17 +72,33 @@ go vet -vettool=$(which musttag) ./...
 
 ### Custom packages
 
-The `-fn=name:tag:argpos` flag can be used to report functions from custom packages, where
+To enable reporting a custom function, you need to add its description to `.golangci.yml`.
 
-* `name` is the full name of the function, including the package
-* `tag` is the struct tag whose presence should be ensured
-* `argpos` is the position of the argument to check
+The following is an example of adding support for the `sqlx.Get` function from [`github.com/jmoiron/sqlx`][7]:
 
-For example, to support the `sqlx.Get` function:
+```yaml
+linters-settings:
+  musttag:
+    functions:
+        # The full name of the function, including the package.
+      - name: github.com/jmoiron/sqlx.Get
+        # The struct tag whose presence should be ensured.
+        tag: db
+        # The position of the argument to check.
+        arg-pos: 1
+```
+
+The same can be done via the `-fn=name:tag:arg-pos` flag when using `musttag` standalone:
 
 ```shell
 musttag -fn="github.com/jmoiron/sqlx.Get:db:1" ./...
 ```
 
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
-[2]: https://github.com/junk1tm/musttag/releases
+[2]: https://pkg.go.dev/encoding/json
+[3]: https://pkg.go.dev/encoding/xml
+[4]: https://github.com/go-yaml/yaml
+[5]: https://github.com/BurntSushi/toml
+[6]: https://github.com/mitchellh/mapstructure
+[7]: https://github.com/jmoiron/sqlx
+[8]: https://github.com/junk1tm/musttag/releases
