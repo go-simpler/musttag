@@ -23,7 +23,9 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Run tests
-        run: go test -race -shuffle=on -coverprofile=coverage.out ./...
+        # do not use `=` to join flags and values, it won't work on Windows;
+        # see https://github.com/PowerShell/PowerShell/issues/6291 for details.
+        run: go test -v -race -shuffle on -coverprofile coverage.out ./...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
