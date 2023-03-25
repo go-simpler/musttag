@@ -53,7 +53,7 @@ To enable the linter, add the following lines to `.golangci.yml`:
 ```yaml
 linters:
   enable:
-    - mustttag
+    - musttag
 ```
 
 If you'd rather prefer to use `musttag` standalone, you can install it via `brew`...
