@@ -198,8 +198,11 @@ func (c *checker) parseStructType(t types.Type, pos token.Pos) (*structType, boo
 
 	switch t := t.(type) {
 	case *types.Named: // a struct of the named type.
-		pkg := t.Obj().Pkg().Path()
-		if _, ok := c.mainModule[pkg]; !ok {
+		pkg := t.Obj().Pkg() // may be nil; see issue #38.
+		if pkg == nil {
+			return nil, false
+		}
+		if _, ok := c.mainModule[pkg.Path()]; !ok {
 			return nil, false
 		}
 		s, ok := t.Underlying().(*types.Struct)
