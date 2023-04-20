@@ -87,7 +87,7 @@ var (
 		pass.Reportf(st.Pos, format, st.Name, fn.Tag, fn.shortName(), fnPos)
 	}
 
-	// HACK(junk1tm): mainModulePackages() does not return packages from `testdata`,
+	// HACK: mainModulePackages() does not return packages from `testdata`,
 	// because it is ignored by the go tool, and thus, by the `go list` command.
 	// For tests to pass we need to add the packages with tests to the main module manually.
 	testPackages []string
@@ -244,7 +244,7 @@ func (c *checker) checkStructType(st *structType, tag string) (*structType, bool
 			}
 		}
 
-		nested, ok := c.parseStructType(field.Type(), st.Pos) // TODO(junk1tm): or field.Pos()?
+		nested, ok := c.parseStructType(field.Type(), st.Pos) // TODO: or field.Pos()?
 		if !ok {
 			continue
 		}

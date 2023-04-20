@@ -1,4 +1,4 @@
-module github.com/junk1tm/musttag
+module go.tmz.dev/musttag
 
 go 1.19
 

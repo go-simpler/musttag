@@ -1,9 +1,9 @@
 # musttag
 
-[![ci](https://github.com/junk1tm/musttag/actions/workflows/go.yml/badge.svg)](https://github.com/junk1tm/musttag/actions/workflows/go.yml)
-[![docs](https://pkg.go.dev/badge/github.com/junk1tm/musttag.svg)](https://pkg.go.dev/github.com/junk1tm/musttag)
-[![report](https://goreportcard.com/badge/github.com/junk1tm/musttag)](https://goreportcard.com/report/github.com/junk1tm/musttag)
-[![codecov](https://codecov.io/gh/junk1tm/musttag/branch/main/graph/badge.svg)](https://codecov.io/gh/junk1tm/musttag)
+[![ci](https://github.com/tmzane/musttag/actions/workflows/go.yml/badge.svg)](https://github.com/tmzane/musttag/actions/workflows/go.yml)
+[![docs](https://pkg.go.dev/badge/go.tmz.dev/musttag.svg)](https://pkg.go.dev/go.tmz.dev/musttag)
+[![report](https://goreportcard.com/badge/github.com/tmzane/musttag)](https://goreportcard.com/report/github.com/tmzane/musttag)
+[![codecov](https://codecov.io/gh/tmzane/musttag/branch/main/graph/badge.svg)](https://codecov.io/gh/tmzane/musttag)
 
 A Go linter that enforces field tags in (un)marshaled structs
 
@@ -59,7 +59,7 @@ linters:
 If you'd rather prefer to use `musttag` standalone, you can install it via `brew`...
 
 ```shell
-brew install junk1tm/tap/musttag
+brew install tmzane/tap/musttag
 ```
 
 ...or download a prebuilt binary from the [Releases][8] page.
@@ -101,4 +101,4 @@ musttag -fn="github.com/jmoiron/sqlx.Get:db:1" ./...
 [5]: https://github.com/BurntSushi/toml
 [6]: https://github.com/mitchellh/mapstructure
 [7]: https://github.com/jmoiron/sqlx
-[8]: https://github.com/junk1tm/musttag/releases
+[8]: https://github.com/tmzane/musttag/releases
