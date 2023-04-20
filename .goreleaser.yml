@@ -21,10 +21,9 @@ archives:
 
 brews:
   - tap:
-      owner: junk1tm
+      owner: tmzane
       name: homebrew-tap
-      branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/junk1tm/musttag"
-    description: "A Go linter that enforces field tags in (un)marshaled structs"
-    license: "MIT"
+    homepage: https://github.com/tmzane/musttag
+    description: A Go linter that enforces field tags in (un)marshaled structs
+    license: MPL-2.0

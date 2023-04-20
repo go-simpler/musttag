@@ -12,7 +12,7 @@ func mainModule() (dir string, packages map[string]struct{}, _ error) {
 	// > When using modules, "all" expands to all packages in the main module
 	// > and their dependencies, including dependencies needed by tests of any of those.
 
-	// NOTE(junk1tm): the command may run out of file descriptors if go version <= 1.18,
+	// NOTE: the command may run out of file descriptors if go version <= 1.18,
 	// especially on macOS, which has the default soft limit set to 256 (ulimit -nS).
 	// Since go1.19 the limit is automatically increased to the maximum allowed value;
 	// see https://github.com/golang/go/issues/46279 for details.

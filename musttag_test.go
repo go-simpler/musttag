@@ -12,7 +12,7 @@ import (
 )
 
 func TestAnalyzer(t *testing.T) {
-	// NOTE(junk1tm): analysistest does not yet support modules;
+	// NOTE: analysistest does not yet support modules;
 	// see https://github.com/golang/go/issues/37054 for details.
 	// To be able to run tests with external dependencies,
 	// we first need to write a GOPATH-like tree of stubs.
