@@ -1,8 +1,8 @@
 # musttag
 
-[![ci](https://github.com/tmzane/musttag/actions/workflows/go.yml/badge.svg)](https://github.com/tmzane/musttag/actions/workflows/go.yml)
-[![docs](https://pkg.go.dev/badge/go.tmz.dev/musttag.svg)](https://pkg.go.dev/go.tmz.dev/musttag)
-[![report](https://goreportcard.com/badge/go.tmz.dev/musttag)](https://goreportcard.com/report/go.tmz.dev/musttag)
+[![checks](https://github.com/tmzane/musttag/actions/workflows/checks.yml/badge.svg)](https://github.com/tmzane/musttag/actions/workflows/checks.yml)
+[![pkg.go.dev](https://pkg.go.dev/badge/go.tmz.dev/musttag.svg)](https://pkg.go.dev/go.tmz.dev/musttag)
+[![goreportcard](https://goreportcard.com/badge/go.tmz.dev/musttag)](https://goreportcard.com/report/go.tmz.dev/musttag)
 [![codecov](https://codecov.io/gh/tmzane/musttag/branch/main/graph/badge.svg)](https://codecov.io/gh/tmzane/musttag)
 
 A Go linter that enforces field tags in (un)marshaled structs
