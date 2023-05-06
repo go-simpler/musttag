@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"go-simpler.org/assert"
+	. "go-simpler.org/assert/dotimport"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
@@ -24,9 +26,11 @@ func TestAnalyzer(t *testing.T) {
 	t.Run("tests", func(t *testing.T) {
 		r := report
 		defer func() { report = r }()
+
 		report = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Position) {
 			pass.Reportf(st.Pos, fn.shortName())
 		}
+
 		analyzer := New()
 		analysistest.Run(t, testdata, analyzer, "tests")
 	})
@@ -40,15 +44,11 @@ func TestAnalyzer(t *testing.T) {
 	})
 
 	t.Run("bad Func.ArgPos", func(t *testing.T) {
-		const want = `Func.ArgPos cannot be 10: encoding/json.Marshal accepts only 1 argument(s)`
 		analyzer := New(
-			// override the builtin function.
 			Func{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
 		)
-		result := analysistest.Run(nopT{}, testdata, analyzer, "tests")[0]
-		if got := result.Err.Error(); got != want {
-			t.Errorf("\ngot\t%s\nwant\t%s", got, want)
-		}
+		err := analysistest.Run(nopT{}, testdata, analyzer, "tests")[0].Err
+		assert.Equal[E](t, err.Error(), `Func.ArgPos cannot be 10: encoding/json.Marshal accepts only 1 argument(s)`)
 	})
 }
 
@@ -59,25 +59,17 @@ func TestFlags(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:0"})
-		if err != nil {
-			t.Errorf("\ngot\t%s\nwant\tno error", err)
-		}
+		assert.NoErr[E](t, err)
 	})
 
 	t.Run("invalid format", func(t *testing.T) {
-		const want = `invalid value "test.Test" for flag -fn: invalid syntax`
 		err := analyzer.Flags.Parse([]string{"-fn=test.Test"})
-		if got := err.Error(); got != want {
-			t.Errorf("\ngot\t%s\nwant\t%s", got, want)
-		}
+		assert.Equal[E](t, err.Error(), `invalid value "test.Test" for flag -fn: invalid syntax`)
 	})
 
 	t.Run("non-number argpos", func(t *testing.T) {
-		const want = `invalid value "test.Test:test:-" for flag -fn: strconv.Atoi: parsing "-": invalid syntax`
 		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:-"})
-		if got := err.Error(); got != want {
-			t.Errorf("\ngot\t%s\nwant\t%s", got, want)
-		}
+		assert.Equal[E](t, err.Error(), `invalid value "test.Test:test:-" for flag -fn: strconv.Atoi: parsing "-": invalid syntax`)
 	})
 }
 
@@ -89,29 +81,31 @@ func prepareTestFiles(t *testing.T) {
 	testdata := analysistest.TestData()
 
 	t.Cleanup(func() {
-		_ = os.RemoveAll(filepath.Join(testdata, "src"))
+		err := os.RemoveAll(filepath.Join(testdata, "src"))
+		assert.NoErr[F](t, err)
 	})
 
 	hardlink := func(dir, file string) {
 		target := filepath.Join(testdata, "src", dir, file)
-		if err := os.MkdirAll(filepath.Dir(target), 0o777); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Link(filepath.Join(testdata, file), target); err != nil {
-			t.Fatal(err)
-		}
+
+		err := os.MkdirAll(filepath.Dir(target), 0o777)
+		assert.NoErr[F](t, err)
+
+		err = os.Link(filepath.Join(testdata, file), target)
+		assert.NoErr[F](t, err)
 	}
+
 	hardlink("tests", "tests.go")
 	hardlink("builtins", "builtins.go")
 
 	for file, data := range stubs {
 		target := filepath.Join(testdata, "src", file)
-		if err := os.MkdirAll(filepath.Dir(target), 0o777); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(target, []byte(data), 0o666); err != nil {
-			t.Fatal(err)
-		}
+
+		err := os.MkdirAll(filepath.Dir(target), 0o777)
+		assert.NoErr[F](t, err)
+
+		err = os.WriteFile(target, []byte(data), 0o666)
+		assert.NoErr[F](t, err)
 	}
 }
 
