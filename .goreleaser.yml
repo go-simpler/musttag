@@ -5,7 +5,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - -s -w -X main.version={{.Version}}
+      - -s -w -X main.version={{ .Version }}
     targets:
       - darwin_amd64
       - darwin_arm64
@@ -23,7 +23,7 @@ brews:
   - tap:
       owner: tmzane
       name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      token: '{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}'
     homepage: https://github.com/tmzane/musttag
     description: A Go linter that enforces field tags in (un)marshaled structs
     license: MPL-2.0
