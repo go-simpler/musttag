@@ -13,7 +13,8 @@ on:
 jobs:
   release:
     uses: go-simpler/.github/.github/workflows/release.yml@main
-    secrets: inherit
     with:
       version: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
       use-goreleaser: true
+    secrets:
+      HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
