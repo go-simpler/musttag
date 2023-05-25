@@ -23,9 +23,10 @@ func mainModule() (dir string, packages map[string]struct{}, _ error) {
 		return "", nil, fmt.Errorf("running `go list all`: %w", err)
 	}
 
-	list := strings.TrimSpace(string(out))
-	packages = make(map[string]struct{}, len(list))
-	for _, pkg := range strings.Split(list, "\n") {
+	list := strings.Split(strings.TrimSpace(string(out)), "\n")
+	packages = make(map[string]struct{}, len(list)*2)
+
+	for _, pkg := range list {
 		packages[pkg] = struct{}{}
 		packages[pkg+"_test"] = struct{}{} // `*_test` packages belong to the main module, see issue #24.
 	}
