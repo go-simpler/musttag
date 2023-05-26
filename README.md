@@ -41,6 +41,7 @@ The following packages are supported out of the box:
 * [`gopkg.in/yaml.v3`][4]
 * [`github.com/BurntSushi/toml`][5]
 * [`github.com/mitchellh/mapstructure`][6]
+* [`github.com/jmoiron/sqlx`][7]
 
 In addition, any [custom package](#custom-packages) can be added to the list.
 
@@ -62,7 +63,7 @@ If you'd rather prefer to use `musttag` standalone, you can install it via `brew
 brew install tmzane/tap/musttag
 ```
 
-...or download a prebuilt binary from the [Releases][8] page.
+...or download a prebuilt binary from the [Releases][9] page.
 
 Then run it either directly or as a `go vet` tool:
 
@@ -74,24 +75,24 @@ go vet -vettool=$(which musttag) ./...
 
 To enable reporting a custom function, you need to add its description to `.golangci.yml`.
 
-The following is an example of adding support for the `sqlx.Get` function from [`github.com/jmoiron/sqlx`][7]:
+The following is an example of adding support for the `hclsimple.DecodeFile` function from [`github.com/hashicorp/hcl`][8]:
 
 ```yaml
 linters-settings:
   musttag:
     functions:
         # The full name of the function, including the package.
-      - name: github.com/jmoiron/sqlx.Get
+      - name: github.com/hashicorp/hcl/v2/hclsimple.DecodeFile
         # The struct tag whose presence should be ensured.
-        tag: db
+        tag: hcl
         # The position of the argument to check.
-        arg-pos: 1
+        arg-pos: 2
 ```
 
 The same can be done via the `-fn=name:tag:arg-pos` flag when using `musttag` standalone:
 
 ```shell
-musttag -fn="github.com/jmoiron/sqlx.Get:db:1" ./...
+musttag -fn="github.com/hashicorp/hcl/v2/hclsimple.DecodeFile:hcl:2" ./...
 ```
 
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
@@ -101,4 +102,5 @@ musttag -fn="github.com/jmoiron/sqlx.Get:db:1" ./...
 [5]: https://github.com/BurntSushi/toml
 [6]: https://github.com/mitchellh/mapstructure
 [7]: https://github.com/jmoiron/sqlx
-[8]: https://github.com/tmzane/musttag/releases
+[8]: https://github.com/hashicorp/hcl
+[9]: https://github.com/tmzane/musttag/releases
