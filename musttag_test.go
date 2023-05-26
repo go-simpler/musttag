@@ -143,6 +143,44 @@ func DecodeMetadata(_, _ any, _ *Metadata) error     { return nil }
 func WeakDecode(_, _ any) error                      { return nil }
 func WeakDecodeMetadata(_, _ any, _ *Metadata) error { return nil }`,
 
+	"github.com/jmoiron/sqlx/sqlx.go": `package sqlx
+import "context"
+type Queryer interface{}
+type QueryerContext interface{}
+type rowsi interface{}
+func Get(Queryer, any, string, ...any) error                                   { return nil }
+func GetContext(context.Context, QueryerContext, any, string, ...any) error    { return nil }
+func Select(Queryer, any, string, ...any) error                                { return nil }
+func SelectContext(context.Context, QueryerContext, any, string, ...any) error { return nil }
+func StructScan(rowsi, any) error                                              { return nil }
+type Conn struct{}
+func (*Conn) GetContext(context.Context, any, string, ...any) error    { return nil }
+func (*Conn) SelectContext(context.Context, any, string, ...any) error { return nil }
+type DB struct{}
+func (*DB) Get(any, string, ...any) error                            { return nil }
+func (*DB) GetContext(context.Context, any, string, ...any) error    { return nil }
+func (*DB) Select(any, string, ...any) error                         { return nil }
+func (*DB) SelectContext(context.Context, any, string, ...any) error { return nil }
+type NamedStmt struct{}
+func (n *NamedStmt) Get(any, any) error                            { return nil }
+func (n *NamedStmt) GetContext(context.Context, any, any) error    { return nil }
+func (n *NamedStmt) Select(any, any) error                         { return nil }
+func (n *NamedStmt) SelectContext(context.Context, any, any) error { return nil }
+type Row struct{}
+func (*Row) StructScan(any) error { return nil }
+type Rows struct{}
+func (*Rows) StructScan(any) error { return nil }
+type Stmt struct{}
+func (*Stmt) Get(any, ...any) error                            { return nil }
+func (*Stmt) GetContext(context.Context, any, ...any) error    { return nil }
+func (*Stmt) Select(any, ...any) error                         { return nil }
+func (*Stmt) SelectContext(context.Context, any, ...any) error { return nil }
+type Tx struct{}
+func (*Tx) Get(any, string, ...any) error                            { return nil }
+func (*Tx) GetContext(context.Context, any, string, ...any) error    { return nil }
+func (*Tx) Select(any, string, ...any) error                         { return nil }
+func (*Tx) SelectContext(context.Context, any, string, ...any) error { return nil }`,
+
 	"example.com/custom/custom.go": `package custom
 func Marshal(_ any) ([]byte, error)   { return nil, nil }
 func Unmarshal(_ []byte, _ any) error { return nil }`,
