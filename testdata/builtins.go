@@ -7,6 +7,7 @@ import (
 	// these packages are generated before the tests are run.
 	"example.com/custom"
 	"github.com/BurntSushi/toml"
+	"github.com/jmoiron/sqlx"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 )
@@ -43,11 +44,37 @@ type User struct { /* want
 	"`User` should be annotated with the `mapstructure` tag as it is passed to `mapstructure.WeakDecode` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
 	"`User` should be annotated with the `mapstructure` tag as it is passed to `mapstructure.WeakDecodeMetadata` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
 
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Get` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.GetContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Select` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.SelectContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.StructScan` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Conn.GetContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Conn.SelectContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.DB.Get` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.DB.GetContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.DB.Select` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.DB.SelectContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.NamedStmt.Get` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.NamedStmt.GetContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.NamedStmt.Select` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.NamedStmt.SelectContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Row.StructScan` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Rows.StructScan` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Stmt.Get` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Stmt.GetContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Stmt.Select` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Stmt.SelectContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Tx.Get` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Tx.GetContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Tx.Select` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+	"`User` should be annotated with the `db` tag as it is passed to `sqlx.Tx.SelectContext` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
+
 	"`User` should be annotated with the `custom` tag as it is passed to `custom.Marshal` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
 	"`User` should be annotated with the `custom` tag as it is passed to `custom.Unmarshal` at testdata(/|\\\\)src(/|\\\\)builtins(/|\\\\)builtins.go"
 	*/
 	Name  string
-	Email string `json:"email" xml:"email" yaml:"email" toml:"email" mapstructure:"email" custom:"email"`
+	Email string `json:"email" xml:"email" yaml:"email" toml:"email" mapstructure:"email" db:"email" custom:"email"`
 }
 
 func testJSON() {
@@ -94,6 +121,35 @@ func testMapstructure() {
 	mapstructure.DecodeMetadata(nil, &user, nil)
 	mapstructure.WeakDecode(nil, &user)
 	mapstructure.WeakDecodeMetadata(nil, &user, nil)
+}
+
+func testSQLX() {
+	var user User
+	sqlx.Get(nil, &user, "")
+	sqlx.GetContext(nil, nil, &user, "")
+	sqlx.Select(nil, &user, "")
+	sqlx.SelectContext(nil, nil, &user, "")
+	sqlx.StructScan(nil, &user)
+	new(sqlx.Conn).GetContext(nil, &user, "")
+	new(sqlx.Conn).SelectContext(nil, &user, "")
+	new(sqlx.DB).Get(&user, "")
+	new(sqlx.DB).GetContext(nil, &user, "")
+	new(sqlx.DB).Select(&user, "")
+	new(sqlx.DB).SelectContext(nil, &user, "")
+	new(sqlx.NamedStmt).Get(&user, nil)
+	new(sqlx.NamedStmt).GetContext(nil, &user, nil)
+	new(sqlx.NamedStmt).Select(&user, nil)
+	new(sqlx.NamedStmt).SelectContext(nil, &user, nil)
+	new(sqlx.Row).StructScan(&user)
+	new(sqlx.Rows).StructScan(&user)
+	new(sqlx.Stmt).Get(&user)
+	new(sqlx.Stmt).GetContext(nil, &user)
+	new(sqlx.Stmt).Select(&user)
+	new(sqlx.Stmt).SelectContext(nil, &user)
+	new(sqlx.Tx).Get(&user, "")
+	new(sqlx.Tx).GetContext(nil, &user, "")
+	new(sqlx.Tx).Select(&user, "")
+	new(sqlx.Tx).SelectContext(nil, &user, "")
 }
 
 func testCustom() {
