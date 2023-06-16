@@ -23,6 +23,10 @@ var builtins = []Func{
 	{Name: "gopkg.in/yaml.v3.Unmarshal", Tag: "yaml", ArgPos: 1},
 	{Name: "(*gopkg.in/yaml.v3.Encoder).Encode", Tag: "yaml", ArgPos: 0},
 	{Name: "(*gopkg.in/yaml.v3.Decoder).Decode", Tag: "yaml", ArgPos: 0},
+	{Name: "gopkg.in/yaml.v2.Marshal", Tag: "yaml", ArgPos: 0},
+	{Name: "gopkg.in/yaml.v2.Unmarshal", Tag: "yaml", ArgPos: 1},
+	{Name: "(*gopkg.in/yaml.v2.Encoder).Encode", Tag: "yaml", ArgPos: 0},
+	{Name: "(*gopkg.in/yaml.v2.Decoder).Decode", Tag: "yaml", ArgPos: 0},
 
 	// https://github.com/BurntSushi/toml
 	{Name: "github.com/BurntSushi/toml.Unmarshal", Tag: "toml", ArgPos: 1},

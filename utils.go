@@ -1,42 +1,34 @@
 package musttag
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
 )
 
-// mainModule returns the directory and the set of packages of the main module.
-func mainModule() (dir string, packages map[string]struct{}, _ error) {
-	// https://pkg.go.dev/cmd/go#hdr-Package_lists_and_patterns
-	// > When using modules, "all" expands to all packages in the main module
-	// > and their dependencies, including dependencies needed by tests of any of those.
+type modInfo struct {
+	Path      string `json:"Path"`
+	Dir       string `json:"Dir"`
+	GoMod     string `json:"GoMod"`
+	GoVersion string `json:"GoVersion"`
+	Main      bool   `json:"Main"`
+}
 
-	// NOTE: the command may run out of file descriptors if go version <= 1.18,
-	// especially on macOS, which has the default soft limit set to 256 (ulimit -nS).
-	// Since go1.19 the limit is automatically increased to the maximum allowed value;
-	// see https://github.com/golang/go/issues/46279 for details.
-	args := []string{"go", "list", "-f={{if and (not .Standard) .Module.Main}}{{.ImportPath}}{{end}}", "all"}
+func getMainModule() (string, error) {
+	args := []string{"go", "list", "-m", "-json"}
 
-	out, err := exec.Command(args[0], args[1:]...).Output()
+	raw, err := exec.Command(args[0], args[1:]...).Output()
 	if err != nil {
-		return "", nil, fmt.Errorf("running `%s`: %w", strings.Join(args, " "), err)
+		return "", fmt.Errorf("running `%s`: %w", strings.Join(args, " "), err)
 	}
 
-	list := strings.Split(strings.TrimSpace(string(out)), "\n")
-	packages = make(map[string]struct{}, len(list)*2)
-
-	for _, pkg := range list {
-		packages[pkg] = struct{}{}
-		packages[pkg+"_test"] = struct{}{} // `*_test` packages belong to the main module, see issue #24.
-	}
-
-	args = []string{"go", "list", "-m", "-f={{.Dir}}"}
-	out, err = exec.Command(args[0], args[1:]...).Output()
+	var v modInfo
+	err = json.NewDecoder(bytes.NewBuffer(raw)).Decode(&v)
 	if err != nil {
-		return "", nil, fmt.Errorf("running `%s`: %w", strings.Join(args, " "), err)
+		return "", fmt.Errorf("unmarshaling error: %w: %s", err, string(raw))
 	}
 
-	dir = strings.TrimSpace(string(out))
-	return dir, packages, nil
+	return v.Path, nil
 }
