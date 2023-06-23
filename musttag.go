@@ -44,6 +44,7 @@ func New(funcs ...Func) *analysis.Analyzer {
 		Run: func(pass *analysis.Pass) (any, error) {
 			l := len(builtins) + len(funcs) + len(flagFuncs)
 			f := make(map[string]Func, l)
+
 			toMap := func(slice []Func) {
 				for _, fn := range slice {
 					f[fn.Name] = fn
@@ -92,11 +93,11 @@ var report = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Posi
 	pass.Reportf(st.Pos, format, st.Name, fn.Tag, fn.shortName(), fnPos)
 }
 
+var cleanFullName = regexp.MustCompile(`([^*/(]+/vendor/)`)
+
 // run starts the analysis.
 func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, error) {
 	var err error
-
-	cleanFullName := regexp.MustCompile(`([^*/(]+/vendor/)`)
 
 	walk := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	filter := []ast.Node{(*ast.CallExpr)(nil)}
@@ -111,12 +112,13 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			return // not a function call.
 		}
 
-		caller := typeutil.StaticCallee(pass.TypesInfo, call)
-		if caller == nil {
+		callee := typeutil.StaticCallee(pass.TypesInfo, call)
+		if callee == nil {
 			return // not a static call.
 		}
 
-		fn, ok := funcs[cleanFullName.ReplaceAllString(caller.FullName(), "")]
+		name := cleanFullName.ReplaceAllString(callee.FullName(), "")
+		fn, ok := funcs[name]
 		if !ok {
 			return // the function is not supported.
 		}
@@ -197,7 +199,7 @@ func (c *checker) parseStructType(t types.Type, pos token.Pos) (*structType, boo
 			return nil, false
 		}
 
-		if !strings.HasPrefix(t.Obj().Pkg().Path(), c.mainModule) {
+		if !strings.HasPrefix(pkg.Path(), c.mainModule) {
 			return nil, false
 		}
 

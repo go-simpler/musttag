@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 
-	// these packages are generated before the tests are run.
 	"example.com/custom"
 	"github.com/BurntSushi/toml"
 	"github.com/jmoiron/sqlx"
