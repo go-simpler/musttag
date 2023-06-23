@@ -4,6 +4,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -14,13 +15,6 @@ import (
 )
 
 func TestAnalyzer(t *testing.T) {
-	// NOTE: analysistest does not yet support modules;
-	// see https://github.com/golang/go/issues/37054 for details.
-	// To be able to run tests with external dependencies,
-	// we first need to write a GOPATH-like tree of stubs.
-	prepareTestFiles(t)
-	testPackages = []string{"tests", "builtins"}
-
 	testdata := analysistest.TestData()
 
 	t.Run("tests", func(t *testing.T) {
@@ -31,11 +25,15 @@ func TestAnalyzer(t *testing.T) {
 			pass.Reportf(st.Pos, fn.shortName())
 		}
 
+		setupTestData(t, testdata, "tests")
+
 		analyzer := New()
 		analysistest.Run(t, testdata, analyzer, "tests")
 	})
 
 	t.Run("builtins", func(t *testing.T) {
+		setupTestData(t, testdata, "builtins")
+
 		analyzer := New(
 			Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
 			Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
@@ -44,6 +42,8 @@ func TestAnalyzer(t *testing.T) {
 	})
 
 	t.Run("bad Func.ArgPos", func(t *testing.T) {
+		setupTestData(t, testdata, "tests")
+
 		analyzer := New(
 			Func{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
 		)
@@ -77,111 +77,19 @@ type nopT struct{}
 
 func (nopT) Errorf(string, ...any) {}
 
-func prepareTestFiles(t *testing.T) {
-	testdata := analysistest.TestData()
+// NOTE: analysistest does not yet support modules;
+// see https://github.com/golang/go/issues/37054 for details.
+func setupTestData(t *testing.T, testDataDir, dir string) {
+	t.Helper()
 
-	t.Cleanup(func() {
-		err := os.RemoveAll(filepath.Join(testdata, "src"))
-		assert.NoErr[F](t, err)
-	})
-
-	hardlink := func(dir, file string) {
-		target := filepath.Join(testdata, "src", dir, file)
-
-		err := os.MkdirAll(filepath.Dir(target), 0o777)
-		assert.NoErr[F](t, err)
-
-		err = os.Link(filepath.Join(testdata, file), target)
-		assert.NoErr[F](t, err)
+	err := os.Chdir(filepath.Join(testDataDir, "src", dir))
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	hardlink("tests", "tests.go")
-	hardlink("builtins", "builtins.go")
-
-	for file, data := range stubs {
-		target := filepath.Join(testdata, "src", file)
-
-		err := os.MkdirAll(filepath.Dir(target), 0o777)
-		assert.NoErr[F](t, err)
-
-		err = os.WriteFile(target, []byte(data), 0o666)
-		assert.NoErr[F](t, err)
+	output, err := exec.Command("go", "mod", "vendor").CombinedOutput()
+	if err != nil {
+		t.Log(string(output))
+		t.Fatal(err)
 	}
-}
-
-var stubs = map[string]string{
-	"gopkg.in/yaml.v3/yaml.go": `package yaml
-import "io"
-func Marshal(_ any) ([]byte, error)   { return nil, nil }
-func Unmarshal(_ []byte, _ any) error { return nil }
-type Encoder struct{}
-func NewEncoder(_ io.Writer) *Encoder { return nil }
-func (*Encoder) Encode(_ any) error   { return nil }
-type Decoder struct{}
-func NewDecoder(_ io.Reader) *Decoder { return nil }
-func (*Decoder) Decode(_ any) error   { return nil }`,
-
-	"github.com/BurntSushi/toml/toml.go": `package toml
-import "io"
-import "io/fs"
-func Unmarshal(_ []byte, _ any) error { return nil }
-type MetaData struct{}
-func Decode(_ string, _ any) (MetaData, error)            { return MetaData{}, nil }
-func DecodeFS(_ fs.FS, _ string, _ any) (MetaData, error) { return MetaData{}, nil }
-func DecodeFile(_ string, _ any) (MetaData, error)        { return MetaData{}, nil }
-type Encoder struct{}
-func NewEncoder(_ io.Writer) *Encoder { return nil }
-func (*Encoder) Encode(_ any) error   { return nil }
-type Decoder struct{}
-func NewDecoder(_ io.Reader) *Decoder { return nil }
-func (*Decoder) Decode(_ any) error   { return nil }`,
-
-	"github.com/mitchellh/mapstructure/mapstructure.go": `package mapstructure
-type Metadata struct{}
-func Decode(_, _ any) error                          { return nil }
-func DecodeMetadata(_, _ any, _ *Metadata) error     { return nil }
-func WeakDecode(_, _ any) error                      { return nil }
-func WeakDecodeMetadata(_, _ any, _ *Metadata) error { return nil }`,
-
-	"github.com/jmoiron/sqlx/sqlx.go": `package sqlx
-import "context"
-type Queryer interface{}
-type QueryerContext interface{}
-type rowsi interface{}
-func Get(Queryer, any, string, ...any) error                                   { return nil }
-func GetContext(context.Context, QueryerContext, any, string, ...any) error    { return nil }
-func Select(Queryer, any, string, ...any) error                                { return nil }
-func SelectContext(context.Context, QueryerContext, any, string, ...any) error { return nil }
-func StructScan(rowsi, any) error                                              { return nil }
-type Conn struct{}
-func (*Conn) GetContext(context.Context, any, string, ...any) error    { return nil }
-func (*Conn) SelectContext(context.Context, any, string, ...any) error { return nil }
-type DB struct{}
-func (*DB) Get(any, string, ...any) error                            { return nil }
-func (*DB) GetContext(context.Context, any, string, ...any) error    { return nil }
-func (*DB) Select(any, string, ...any) error                         { return nil }
-func (*DB) SelectContext(context.Context, any, string, ...any) error { return nil }
-type NamedStmt struct{}
-func (n *NamedStmt) Get(any, any) error                            { return nil }
-func (n *NamedStmt) GetContext(context.Context, any, any) error    { return nil }
-func (n *NamedStmt) Select(any, any) error                         { return nil }
-func (n *NamedStmt) SelectContext(context.Context, any, any) error { return nil }
-type Row struct{}
-func (*Row) StructScan(any) error { return nil }
-type Rows struct{}
-func (*Rows) StructScan(any) error { return nil }
-type Stmt struct{}
-func (*Stmt) Get(any, ...any) error                            { return nil }
-func (*Stmt) GetContext(context.Context, any, ...any) error    { return nil }
-func (*Stmt) Select(any, ...any) error                         { return nil }
-func (*Stmt) SelectContext(context.Context, any, ...any) error { return nil }
-type Tx struct{}
-func (*Tx) Get(any, string, ...any) error                            { return nil }
-func (*Tx) GetContext(context.Context, any, string, ...any) error    { return nil }
-func (*Tx) Select(any, string, ...any) error                         { return nil }
-func (*Tx) SelectContext(context.Context, any, string, ...any) error { return nil }`,
-
-	"example.com/custom/custom.go": `package custom
-func Marshal(_ any) ([]byte, error)   { return nil, nil }
-func Unmarshal(_ []byte, _ any) error { return nil }`,
 }
