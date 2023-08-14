@@ -1,8 +1,12 @@
 package musttag
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -22,9 +26,21 @@ func getMainModule() (string, error) {
 		GoMod     string `json:"GoMod"`
 		GoVersion string `json:"GoVersion"`
 	}
-	if err := json.Unmarshal(data, &module); err != nil {
-		return "", fmt.Errorf("decoding json: %w: %s", err, string(data))
-	}
 
-	return module.Path, nil
+	cwd, _ := os.Getwd()
+	decoder := json.NewDecoder(bytes.NewBuffer(data))
+
+	for {
+		if err := decoder.Decode(&module); err != nil {
+			if errors.Is(err, io.EOF) {
+				return "", fmt.Errorf("no main module in: %s", string(data))
+			}
+
+			return "", fmt.Errorf("decoding json: %w: %s", err, string(data))
+		}
+
+		if module.Main && strings.HasPrefix(cwd, module.Dir) {
+			return module.Path, nil
+		}
+	}
 }
