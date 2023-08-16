@@ -12,12 +12,21 @@ func Test_getMainModule(t *testing.T) {
 		t.Helper()
 		t.Run(name, func(t *testing.T) {
 			t.Helper()
+
+			gwd := getwd
+			co := commandOutput
+			defer func() {
+				getwd = gwd
+				commandOutput = co
+			}()
+
 			getwd = func() (string, error) {
 				return "/path/to/module1/pkg", nil
 			}
 			commandOutput = func(name string, args ...string) (string, error) {
 				return output, nil
 			}
+
 			got, err := getMainModule()
 			assert.NoErr[F](t, err)
 			assert.Equal[E](t, got, want)
