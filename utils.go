@@ -27,7 +27,11 @@ func getMainModule() (string, error) {
 		return "", fmt.Errorf("running `%s`: %w", strings.Join(args, " "), err)
 	}
 
-	cwd, _ := getwd()
+	cwd, err := getwd()
+	if err != nil {
+		return "", fmt.Errorf("getting wd: %w", err)
+	}
+
 	decoder := json.NewDecoder(strings.NewReader(output))
 
 	for {
