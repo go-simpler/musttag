@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"go-simpler.org/assert"
-	. "go-simpler.org/assert/dotimport"
+	. "go-simpler.org/assert/EF"
 )
 
 func Test_getMainModule(t *testing.T) {
