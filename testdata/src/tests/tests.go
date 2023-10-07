@@ -95,7 +95,9 @@ func nothingToReport() {
 	json.NewDecoder(nil).Decode(&Foo{})
 }
 
-type marshaler struct{}
+type marshaler struct {
+	NoTag string
+}
 
 func (marshaler) MarshalJSON() ([]byte, error) { return nil, nil }
 
