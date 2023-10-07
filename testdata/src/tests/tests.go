@@ -99,7 +99,7 @@ type marshaler struct{}
 
 func (marshaler) MarshalJSON() ([]byte, error) { return nil, nil }
 
-func implementsInterface() {
+func implementsMarshaler() {
 	var m marshaler
 	json.Marshal(m)
 	json.Marshal(marshaler{})

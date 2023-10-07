@@ -156,8 +156,8 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			initialPos = arg.Pos()
 		}
 
-		argType := pass.TypesInfo.TypeOf(arg)
-		if argType == nil {
+		typ := pass.TypesInfo.TypeOf(arg)
+		if typ == nil {
 			return // no type info found.
 		}
 
@@ -165,18 +165,8 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			if pkg.Path() != fn.pkgPath() {
 				continue
 			}
-			for _, ifaceName := range fn.ifaceWhitelist {
-				obj := pkg.Scope().Lookup(ifaceName)
-				if obj == nil {
-					continue
-				}
-				iface, ok := obj.Type().Underlying().(*types.Interface)
-				if !ok {
-					continue
-				}
-				if types.Implements(argType, iface) {
-					return // the argument implements an (Un)Marshaler interface, no need to check; see issue #64.
-				}
+			if implementsInterface(typ, pkg, fn.ifaceWhitelist) {
+				return // the argument implements an (Un)Marshaler interface, no need to check; see issue #64.
 			}
 			break
 		}
@@ -186,7 +176,7 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			seenTypes:  make(map[string]struct{}),
 		}
 
-		st, ok := checker.parseStructType(argType, initialPos)
+		st, ok := checker.parseStructType(typ, initialPos)
 		if !ok {
 			return // not a struct argument.
 		}
@@ -292,4 +282,21 @@ func (c *checker) checkStructType(st *structType, tag string) (*structType, bool
 	}
 
 	return nil, true
+}
+
+func implementsInterface(typ types.Type, pkg *types.Package, ifaces []string) bool {
+	for _, ifaceName := range ifaces {
+		obj := pkg.Scope().Lookup(ifaceName)
+		if obj == nil {
+			continue
+		}
+		iface, ok := obj.Type().Underlying().(*types.Interface)
+		if !ok {
+			continue
+		}
+		if types.Implements(typ, iface) {
+			return true
+		}
+	}
+	return false
 }
