@@ -24,11 +24,23 @@ type Func struct {
 	Name   string // Name is the full name of the function, including the package.
 	Tag    string // Tag is the struct tag whose presence should be ensured.
 	ArgPos int    // ArgPos is the position of the argument to check.
+
+	// a list of interfaces from the same package;
+	// if at least one is implemented by the argument, no check is performed.
+	ifaceWhitelist []string
 }
 
 func (fn Func) shortName() string {
 	name := strings.NewReplacer("*", "", "(", "", ")", "").Replace(fn.Name)
 	return path.Base(name)
+}
+
+func (fn Func) pkgPath() string {
+	name := strings.NewReplacer("*", "", "(", "", ")", "").Replace(fn.Name)
+	if idx := strings.LastIndex(name, "."); idx != -1 {
+		return name[:idx]
+	}
+	return ""
 }
 
 // New creates a new musttag analyzer.
@@ -144,13 +156,37 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			initialPos = arg.Pos()
 		}
 
+		argType := pass.TypesInfo.TypeOf(arg)
+		if argType == nil {
+			return // no type info found.
+		}
+
+		for _, pkg := range pass.Pkg.Imports() {
+			if pkg.Path() != fn.pkgPath() {
+				continue
+			}
+			for _, ifaceName := range fn.ifaceWhitelist {
+				obj := pkg.Scope().Lookup(ifaceName)
+				if obj == nil {
+					continue
+				}
+				iface, ok := obj.Type().Underlying().(*types.Interface)
+				if !ok {
+					continue
+				}
+				if types.Implements(argType, iface) {
+					return // the argument implements an (Un)Marshaler interface, no need to check; see issue #64.
+				}
+			}
+			break
+		}
+
 		checker := checker{
 			mainModule: mainModule,
 			seenTypes:  make(map[string]struct{}),
 		}
 
-		t := pass.TypesInfo.TypeOf(arg)
-		st, ok := checker.parseStructType(t, initialPos)
+		st, ok := checker.parseStructType(argType, initialPos)
 		if !ok {
 			return // not a struct argument.
 		}

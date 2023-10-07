@@ -94,3 +94,13 @@ func nothingToReport() {
 	json.NewEncoder(nil).Encode(Foo{})
 	json.NewDecoder(nil).Decode(&Foo{})
 }
+
+type marshaler struct{}
+
+func (marshaler) MarshalJSON() ([]byte, error) { return nil, nil }
+
+func implementsInterface() {
+	var m marshaler
+	json.Marshal(m)
+	json.Marshal(marshaler{})
+}
