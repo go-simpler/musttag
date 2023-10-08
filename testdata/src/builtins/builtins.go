@@ -93,6 +93,11 @@ type TextMarshaler struct{ NoTag string }
 func (TextMarshaler) MarshalText() ([]byte, error) { return nil, nil }
 func (TextMarshaler) UnmarshalText([]byte) error   { return nil }
 
+type YAMLMarshaler struct{ NoTag string }
+
+func (YAMLMarshaler) MarshalYAML() (any, error)      { return nil, nil }
+func (YAMLMarshaler) UnmarshalYAML(*yaml.Node) error { return nil }
+
 func testJSON() {
 	var user User
 	json.Marshal(user)
@@ -151,6 +156,12 @@ func testYAML() {
 	yaml.Unmarshal(nil, &user)
 	yaml.NewEncoder(nil).Encode(user)
 	yaml.NewDecoder(nil).Decode(&user)
+
+	var ym YAMLMarshaler
+	yaml.Marshal(ym)
+	yaml.Unmarshal(nil, &ym)
+	yaml.NewEncoder(nil).Encode(ym)
+	yaml.NewDecoder(nil).Decode(&ym)
 }
 
 func testTOML() {

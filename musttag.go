@@ -97,7 +97,7 @@ var report = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Posi
 	pass.Reportf(st.Pos, format, st.Name, fn.Tag, fn.shortName(), fnPos)
 }
 
-var cleanFullName = regexp.MustCompile(`([^*/(]+/vendor/)`)
+var trimVendor = regexp.MustCompile(`([^*/(]+/vendor/)`)
 
 // run starts the analysis.
 func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, error) {
@@ -121,7 +121,7 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			return // not a static call.
 		}
 
-		name := cleanFullName.ReplaceAllString(callee.FullName(), "")
+		name := trimVendor.ReplaceAllString(callee.FullName(), "")
 		fn, ok := funcs[name]
 		if !ok {
 			return // the function is not supported.
@@ -274,14 +274,14 @@ func implementsInterface(typ types.Type, ifaces []string, imports []*types.Packa
 	findScope := func(pkgName string) (*types.Scope, bool) {
 		// fast path: check direct imports (e.g. looking for "encoding/json.Marshaler").
 		for _, direct := range imports {
-			if pkgName == direct.Path() {
+			if pkgName == trimVendor.ReplaceAllString(direct.Path(), "") {
 				return direct.Scope(), true
 			}
 		}
 		// slow path: check indirect imports (e.g. looking for "encoding.TextMarshaler").
 		for _, direct := range imports {
 			for _, indirect := range direct.Imports() {
-				if pkgName == indirect.Path() {
+				if pkgName == trimVendor.ReplaceAllString(indirect.Path(), "") {
 					return indirect.Scope(), true
 				}
 			}

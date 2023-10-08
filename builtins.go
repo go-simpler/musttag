@@ -79,10 +79,30 @@ var builtins = []Func{
 	},
 
 	// https://github.com/go-yaml/yaml
-	{Name: "gopkg.in/yaml.v3.Marshal", Tag: "yaml", ArgPos: 0},
-	{Name: "gopkg.in/yaml.v3.Unmarshal", Tag: "yaml", ArgPos: 1},
-	{Name: "(*gopkg.in/yaml.v3.Encoder).Encode", Tag: "yaml", ArgPos: 0},
-	{Name: "(*gopkg.in/yaml.v3.Decoder).Decode", Tag: "yaml", ArgPos: 0},
+	{
+		Name:           "gopkg.in/yaml.v3.Marshal",
+		Tag:            "yaml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"gopkg.in/yaml.v3.Marshaler"},
+	},
+	{
+		Name:           "gopkg.in/yaml.v3.Unmarshal",
+		Tag:            "yaml",
+		ArgPos:         1,
+		ifaceWhitelist: []string{"gopkg.in/yaml.v3.Unmarshaler"},
+	},
+	{
+		Name:           "(*gopkg.in/yaml.v3.Encoder).Encode",
+		Tag:            "yaml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"gopkg.in/yaml.v3.Marshaler"},
+	},
+	{
+		Name:           "(*gopkg.in/yaml.v3.Decoder).Decode",
+		Tag:            "yaml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"gopkg.in/yaml.v3.Unmarshaler"},
+	},
 
 	// https://github.com/BurntSushi/toml
 	{Name: "github.com/BurntSushi/toml.Unmarshal", Tag: "toml", ArgPos: 1},
