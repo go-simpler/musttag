@@ -76,6 +76,8 @@ type User struct { /* want
 	Email string `json:"email" xml:"email" yaml:"email" toml:"email" mapstructure:"email" db:"email" custom:"email"`
 }
 
+// TODO: Unmarshaler should be implemented using pointer semantics.
+
 type JSONMarshaler struct{ NoTag string }
 
 func (JSONMarshaler) MarshalJSON() ([]byte, error) { return nil, nil }
