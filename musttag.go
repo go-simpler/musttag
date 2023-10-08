@@ -24,6 +24,10 @@ type Func struct {
 	Name   string // Name is the full name of the function, including the package.
 	Tag    string // Tag is the struct tag whose presence should be ensured.
 	ArgPos int    // ArgPos is the position of the argument to check.
+
+	// a list of interface names (including the package);
+	// if at least one is implemented by the argument, no check is performed.
+	ifaceWhitelist []string
 }
 
 func (fn Func) shortName() string {
@@ -93,7 +97,7 @@ var report = func(pass *analysis.Pass, st *structType, fn Func, fnPos token.Posi
 	pass.Reportf(st.Pos, format, st.Name, fn.Tag, fn.shortName(), fnPos)
 }
 
-var cleanFullName = regexp.MustCompile(`([^*/(]+/vendor/)`)
+var trimVendor = regexp.MustCompile(`([^*/(]+/vendor/)`)
 
 // run starts the analysis.
 func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, error) {
@@ -117,7 +121,7 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			return // not a static call.
 		}
 
-		name := cleanFullName.ReplaceAllString(callee.FullName(), "")
+		name := trimVendor.ReplaceAllString(callee.FullName(), "")
 		fn, ok := funcs[name]
 		if !ok {
 			return // the function is not supported.
@@ -144,13 +148,21 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			initialPos = arg.Pos()
 		}
 
+		typ := pass.TypesInfo.TypeOf(arg)
+		if typ == nil {
+			return // no type info found.
+		}
+
+		if implementsInterface(typ, fn.ifaceWhitelist, pass.Pkg.Imports()) {
+			return // the type implements a Marshaler interface, nothing to check; see issue #64.
+		}
+
 		checker := checker{
 			mainModule: mainModule,
 			seenTypes:  make(map[string]struct{}),
 		}
 
-		t := pass.TypesInfo.TypeOf(arg)
-		st, ok := checker.parseStructType(t, initialPos)
+		st, ok := checker.parseStructType(typ, initialPos)
 		if !ok {
 			return // not a struct argument.
 		}
@@ -256,4 +268,51 @@ func (c *checker) checkStructType(st *structType, tag string) (*structType, bool
 	}
 
 	return nil, true
+}
+
+func implementsInterface(typ types.Type, ifaces []string, imports []*types.Package) bool {
+	findScope := func(pkgName string) (*types.Scope, bool) {
+		// fast path: check direct imports (e.g. looking for "encoding/json.Marshaler").
+		for _, direct := range imports {
+			if pkgName == trimVendor.ReplaceAllString(direct.Path(), "") {
+				return direct.Scope(), true
+			}
+		}
+		// slow path: check indirect imports (e.g. looking for "encoding.TextMarshaler").
+		for _, direct := range imports {
+			for _, indirect := range direct.Imports() {
+				if pkgName == trimVendor.ReplaceAllString(indirect.Path(), "") {
+					return indirect.Scope(), true
+				}
+			}
+		}
+		return nil, false
+	}
+
+	for _, ifacePath := range ifaces {
+		// "encoding/json.Marshaler" -> "encoding/json" + "Marshaler"
+		idx := strings.LastIndex(ifacePath, ".")
+		if idx == -1 {
+			continue
+		}
+		pkgName, ifaceName := ifacePath[:idx], ifacePath[idx+1:]
+
+		scope, ok := findScope(pkgName)
+		if !ok {
+			continue
+		}
+		obj := scope.Lookup(ifaceName)
+		if obj == nil {
+			continue
+		}
+		iface, ok := obj.Type().Underlying().(*types.Interface)
+		if !ok {
+			continue
+		}
+		if types.Implements(typ, iface) {
+			return true
+		}
+	}
+
+	return false
 }
