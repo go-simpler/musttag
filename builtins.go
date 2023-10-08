@@ -105,12 +105,42 @@ var builtins = []Func{
 	},
 
 	// https://github.com/BurntSushi/toml
-	{Name: "github.com/BurntSushi/toml.Unmarshal", Tag: "toml", ArgPos: 1},
-	{Name: "github.com/BurntSushi/toml.Decode", Tag: "toml", ArgPos: 1},
-	{Name: "github.com/BurntSushi/toml.DecodeFS", Tag: "toml", ArgPos: 2},
-	{Name: "github.com/BurntSushi/toml.DecodeFile", Tag: "toml", ArgPos: 1},
-	{Name: "(*github.com/BurntSushi/toml.Encoder).Encode", Tag: "toml", ArgPos: 0},
-	{Name: "(*github.com/BurntSushi/toml.Decoder).Decode", Tag: "toml", ArgPos: 0},
+	{
+		Name:           "github.com/BurntSushi/toml.Unmarshal",
+		Tag:            "toml",
+		ArgPos:         1,
+		ifaceWhitelist: []string{"github.com/BurntSushi/toml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
+	{
+		Name:           "github.com/BurntSushi/toml.Decode",
+		Tag:            "toml",
+		ArgPos:         1,
+		ifaceWhitelist: []string{"github.com/BurntSushi/toml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
+	{
+		Name:           "github.com/BurntSushi/toml.DecodeFS",
+		Tag:            "toml",
+		ArgPos:         2,
+		ifaceWhitelist: []string{"github.com/BurntSushi/toml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
+	{
+		Name:           "github.com/BurntSushi/toml.DecodeFile",
+		Tag:            "toml",
+		ArgPos:         1,
+		ifaceWhitelist: []string{"github.com/BurntSushi/toml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
+	{
+		Name:           "(*github.com/BurntSushi/toml.Encoder).Encode",
+		Tag:            "toml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"encoding.TextMarshaler"},
+	},
+	{
+		Name:           "(*github.com/BurntSushi/toml.Decoder).Decode",
+		Tag:            "toml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"github.com/BurntSushi/toml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
 
 	// https://github.com/mitchellh/mapstructure
 	{Name: "github.com/mitchellh/mapstructure.Decode", Tag: "mapstructure", ArgPos: 1},

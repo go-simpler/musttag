@@ -78,25 +78,20 @@ type User struct { /* want
 
 // TODO: Unmarshaler should be implemented using pointer semantics.
 
-type JSONMarshaler struct{ NoTag string }
-
-func (JSONMarshaler) MarshalJSON() ([]byte, error) { return nil, nil }
-func (JSONMarshaler) UnmarshalJSON([]byte) error   { return nil }
-
-type XMLMarshaler struct{ NoTag string }
-
-func (XMLMarshaler) MarshalXML(e *xml.Encoder, start xml.StartElement) error   { return nil }
-func (XMLMarshaler) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error { return nil }
-
 type TextMarshaler struct{ NoTag string }
 
 func (TextMarshaler) MarshalText() ([]byte, error) { return nil, nil }
 func (TextMarshaler) UnmarshalText([]byte) error   { return nil }
 
-type YAMLMarshaler struct{ NoTag string }
+type Marshaler struct{ NoTag string }
 
-func (YAMLMarshaler) MarshalYAML() (any, error)      { return nil, nil }
-func (YAMLMarshaler) UnmarshalYAML(*yaml.Node) error { return nil }
+func (Marshaler) MarshalJSON() ([]byte, error)                              { return nil, nil }
+func (Marshaler) UnmarshalJSON([]byte) error                                { return nil }
+func (Marshaler) MarshalXML(e *xml.Encoder, start xml.StartElement) error   { return nil }
+func (Marshaler) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error { return nil }
+func (Marshaler) MarshalYAML() (any, error)                                 { return nil, nil }
+func (Marshaler) UnmarshalYAML(*yaml.Node) error                            { return nil }
+func (Marshaler) UnmarshalTOML(any) error                                   { return nil }
 
 func testJSON() {
 	var user User
@@ -106,12 +101,12 @@ func testJSON() {
 	json.NewEncoder(nil).Encode(user)
 	json.NewDecoder(nil).Decode(&user)
 
-	var jm JSONMarshaler
-	json.Marshal(jm)
-	json.MarshalIndent(jm, "", "")
-	json.Unmarshal(nil, &jm)
-	json.NewEncoder(nil).Encode(jm)
-	json.NewDecoder(nil).Decode(&jm)
+	var m Marshaler
+	json.Marshal(m)
+	json.MarshalIndent(m, "", "")
+	json.Unmarshal(nil, &m)
+	json.NewEncoder(nil).Encode(m)
+	json.NewDecoder(nil).Decode(&m)
 
 	var tm TextMarshaler
 	json.Marshal(tm)
@@ -131,14 +126,14 @@ func testXML() {
 	xml.NewEncoder(nil).EncodeElement(user, xml.StartElement{})
 	xml.NewDecoder(nil).DecodeElement(&user, &xml.StartElement{})
 
-	var xm XMLMarshaler
-	xml.Marshal(xm)
-	xml.MarshalIndent(xm, "", "")
-	xml.Unmarshal(nil, &xm)
-	xml.NewEncoder(nil).Encode(xm)
-	xml.NewDecoder(nil).Decode(&xm)
-	xml.NewEncoder(nil).EncodeElement(xm, xml.StartElement{})
-	xml.NewDecoder(nil).DecodeElement(&xm, &xml.StartElement{})
+	var m Marshaler
+	xml.Marshal(m)
+	xml.MarshalIndent(m, "", "")
+	xml.Unmarshal(nil, &m)
+	xml.NewEncoder(nil).Encode(m)
+	xml.NewDecoder(nil).Decode(&m)
+	xml.NewEncoder(nil).EncodeElement(m, xml.StartElement{})
+	xml.NewDecoder(nil).DecodeElement(&m, &xml.StartElement{})
 
 	var tm TextMarshaler
 	xml.Marshal(tm)
@@ -157,11 +152,11 @@ func testYAML() {
 	yaml.NewEncoder(nil).Encode(user)
 	yaml.NewDecoder(nil).Decode(&user)
 
-	var ym YAMLMarshaler
-	yaml.Marshal(ym)
-	yaml.Unmarshal(nil, &ym)
-	yaml.NewEncoder(nil).Encode(ym)
-	yaml.NewDecoder(nil).Decode(&ym)
+	var m Marshaler
+	yaml.Marshal(m)
+	yaml.Unmarshal(nil, &m)
+	yaml.NewEncoder(nil).Encode(m)
+	yaml.NewDecoder(nil).Decode(&m)
 }
 
 func testTOML() {
@@ -172,6 +167,21 @@ func testTOML() {
 	toml.DecodeFile("", &user)
 	toml.NewEncoder(nil).Encode(user)
 	toml.NewDecoder(nil).Decode(&user)
+
+	var m Marshaler
+	toml.Unmarshal(nil, &m)
+	toml.Decode("", &m)
+	toml.DecodeFS(nil, "", &m)
+	toml.DecodeFile("", &m)
+	toml.NewDecoder(nil).Decode(&m)
+
+	var tm TextMarshaler
+	toml.Unmarshal(nil, &tm)
+	toml.Decode("", &tm)
+	toml.DecodeFS(nil, "", &tm)
+	toml.DecodeFile("", &tm)
+	toml.NewEncoder(nil).Encode(tm)
+	toml.NewDecoder(nil).Decode(&tm)
 }
 
 func testMapstructure() {
