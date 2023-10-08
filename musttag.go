@@ -25,7 +25,7 @@ type Func struct {
 	Tag    string // Tag is the struct tag whose presence should be ensured.
 	ArgPos int    // ArgPos is the position of the argument to check.
 
-	// a list of interfaces from the same package;
+	// a list of interface names (including the package);
 	// if at least one is implemented by the argument, no check is performed.
 	ifaceWhitelist []string
 }
@@ -33,14 +33,6 @@ type Func struct {
 func (fn Func) shortName() string {
 	name := strings.NewReplacer("*", "", "(", "", ")", "").Replace(fn.Name)
 	return path.Base(name)
-}
-
-func (fn Func) pkgPath() string {
-	name := strings.NewReplacer("*", "", "(", "", ")", "").Replace(fn.Name)
-	if idx := strings.LastIndex(name, "."); idx != -1 {
-		return name[:idx]
-	}
-	return ""
 }
 
 // New creates a new musttag analyzer.
@@ -161,14 +153,8 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (any, er
 			return // no type info found.
 		}
 
-		for _, pkg := range pass.Pkg.Imports() {
-			if pkg.Path() != fn.pkgPath() {
-				continue
-			}
-			if implementsInterface(typ, pkg, fn.ifaceWhitelist) {
-				return // the argument implements an (Un)Marshaler interface, no need to check; see issue #64.
-			}
-			break
+		if implementsInterface(typ, fn.ifaceWhitelist, pass.Pkg.Imports()) {
+			return // the type implements a Marshaler interface, nothing to check; see issue #64.
 		}
 
 		checker := checker{
@@ -284,9 +270,38 @@ func (c *checker) checkStructType(st *structType, tag string) (*structType, bool
 	return nil, true
 }
 
-func implementsInterface(typ types.Type, pkg *types.Package, ifaces []string) bool {
-	for _, ifaceName := range ifaces {
-		obj := pkg.Scope().Lookup(ifaceName)
+func implementsInterface(typ types.Type, ifaces []string, imports []*types.Package) bool {
+	findScope := func(pkgName string) (*types.Scope, bool) {
+		// fast path: check direct imports (e.g. looking for "encoding/json.Marshaler").
+		for _, direct := range imports {
+			if pkgName == direct.Path() {
+				return direct.Scope(), true
+			}
+		}
+		// slow path: check indirect imports (e.g. looking for "encoding.TextMarshaler").
+		for _, direct := range imports {
+			for _, indirect := range direct.Imports() {
+				if pkgName == indirect.Path() {
+					return indirect.Scope(), true
+				}
+			}
+		}
+		return nil, false
+	}
+
+	for _, ifacePath := range ifaces {
+		// "encoding/json.Marshaler" -> "encoding/json" + "Marshaler"
+		idx := strings.LastIndex(ifacePath, ".")
+		if idx == -1 {
+			continue
+		}
+		pkgName, ifaceName := ifacePath[:idx], ifacePath[idx+1:]
+
+		scope, ok := findScope(pkgName)
+		if !ok {
+			continue
+		}
+		obj := scope.Lookup(ifaceName)
 		if obj == nil {
 			continue
 		}
@@ -298,5 +313,6 @@ func implementsInterface(typ types.Type, pkg *types.Package, ifaces []string) bo
 			return true
 		}
 	}
+
 	return false
 }

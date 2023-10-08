@@ -76,6 +76,16 @@ type User struct { /* want
 	Email string `json:"email" xml:"email" yaml:"email" toml:"email" mapstructure:"email" db:"email" custom:"email"`
 }
 
+type Marshaler struct{ NoTag string }
+
+func (Marshaler) MarshalJSON() ([]byte, error) { return nil, nil }
+func (Marshaler) UnmarshalJSON([]byte) error   { return nil }
+
+type TextMarshaler struct{ NoTag string }
+
+func (TextMarshaler) MarshalText() ([]byte, error) { return nil, nil }
+func (TextMarshaler) UnmarshalText([]byte) error   { return nil }
+
 func testJSON() {
 	var user User
 	json.Marshal(user)
@@ -83,6 +93,20 @@ func testJSON() {
 	json.Unmarshal(nil, &user)
 	json.NewEncoder(nil).Encode(user)
 	json.NewDecoder(nil).Decode(&user)
+
+	var m Marshaler
+	json.Marshal(m)
+	json.MarshalIndent(m, "", "")
+	json.Unmarshal(nil, &m)
+	json.NewEncoder(nil).Encode(m)
+	json.NewDecoder(nil).Decode(&m)
+
+	var tm TextMarshaler
+	json.Marshal(tm)
+	json.MarshalIndent(tm, "", "")
+	json.Unmarshal(nil, &tm)
+	json.NewEncoder(nil).Encode(tm)
+	json.NewDecoder(nil).Decode(&tm)
 }
 
 func testXML() {
