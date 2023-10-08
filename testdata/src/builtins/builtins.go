@@ -76,10 +76,15 @@ type User struct { /* want
 	Email string `json:"email" xml:"email" yaml:"email" toml:"email" mapstructure:"email" db:"email" custom:"email"`
 }
 
-type Marshaler struct{ NoTag string }
+type JSONMarshaler struct{ NoTag string }
 
-func (Marshaler) MarshalJSON() ([]byte, error) { return nil, nil }
-func (Marshaler) UnmarshalJSON([]byte) error   { return nil }
+func (JSONMarshaler) MarshalJSON() ([]byte, error) { return nil, nil }
+func (JSONMarshaler) UnmarshalJSON([]byte) error   { return nil }
+
+type XMLMarshaler struct{ NoTag string }
+
+func (XMLMarshaler) MarshalXML(e *xml.Encoder, start xml.StartElement) error   { return nil }
+func (XMLMarshaler) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error { return nil }
 
 type TextMarshaler struct{ NoTag string }
 
@@ -94,12 +99,12 @@ func testJSON() {
 	json.NewEncoder(nil).Encode(user)
 	json.NewDecoder(nil).Decode(&user)
 
-	var m Marshaler
-	json.Marshal(m)
-	json.MarshalIndent(m, "", "")
-	json.Unmarshal(nil, &m)
-	json.NewEncoder(nil).Encode(m)
-	json.NewDecoder(nil).Decode(&m)
+	var jm JSONMarshaler
+	json.Marshal(jm)
+	json.MarshalIndent(jm, "", "")
+	json.Unmarshal(nil, &jm)
+	json.NewEncoder(nil).Encode(jm)
+	json.NewDecoder(nil).Decode(&jm)
 
 	var tm TextMarshaler
 	json.Marshal(tm)
@@ -118,6 +123,24 @@ func testXML() {
 	xml.NewDecoder(nil).Decode(&user)
 	xml.NewEncoder(nil).EncodeElement(user, xml.StartElement{})
 	xml.NewDecoder(nil).DecodeElement(&user, &xml.StartElement{})
+
+	var xm XMLMarshaler
+	xml.Marshal(xm)
+	xml.MarshalIndent(xm, "", "")
+	xml.Unmarshal(nil, &xm)
+	xml.NewEncoder(nil).Encode(xm)
+	xml.NewDecoder(nil).Decode(&xm)
+	xml.NewEncoder(nil).EncodeElement(xm, xml.StartElement{})
+	xml.NewDecoder(nil).DecodeElement(&xm, &xml.StartElement{})
+
+	var tm TextMarshaler
+	xml.Marshal(tm)
+	xml.MarshalIndent(tm, "", "")
+	xml.Unmarshal(nil, &tm)
+	xml.NewEncoder(nil).Encode(tm)
+	xml.NewDecoder(nil).Decode(&tm)
+	xml.NewEncoder(nil).EncodeElement(tm, xml.StartElement{})
+	xml.NewDecoder(nil).DecodeElement(&tm, &xml.StartElement{})
 }
 
 func testYAML() {

@@ -35,13 +35,48 @@ var builtins = []Func{
 	},
 
 	// https://pkg.go.dev/encoding/xml
-	{Name: "encoding/xml.Marshal", Tag: "xml", ArgPos: 0},
-	{Name: "encoding/xml.MarshalIndent", Tag: "xml", ArgPos: 0},
-	{Name: "encoding/xml.Unmarshal", Tag: "xml", ArgPos: 1},
-	{Name: "(*encoding/xml.Encoder).Encode", Tag: "xml", ArgPos: 0},
-	{Name: "(*encoding/xml.Decoder).Decode", Tag: "xml", ArgPos: 0},
-	{Name: "(*encoding/xml.Encoder).EncodeElement", Tag: "xml", ArgPos: 0},
-	{Name: "(*encoding/xml.Decoder).DecodeElement", Tag: "xml", ArgPos: 0},
+	{
+		Name:           "encoding/xml.Marshal",
+		Tag:            "xml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"encoding/xml.Marshaler", "encoding.TextMarshaler"},
+	},
+	{
+		Name:           "encoding/xml.MarshalIndent",
+		Tag:            "xml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"encoding/xml.Marshaler", "encoding.TextMarshaler"},
+	},
+	{
+		Name:           "encoding/xml.Unmarshal",
+		Tag:            "xml",
+		ArgPos:         1,
+		ifaceWhitelist: []string{"encoding/xml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
+	{
+		Name:           "(*encoding/xml.Encoder).Encode",
+		Tag:            "xml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"encoding/xml.Marshaler", "encoding.TextMarshaler"},
+	},
+	{
+		Name:           "(*encoding/xml.Decoder).Decode",
+		Tag:            "xml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"encoding/xml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
+	{
+		Name:           "(*encoding/xml.Encoder).EncodeElement",
+		Tag:            "xml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"encoding/xml.Marshaler", "encoding.TextMarshaler"},
+	},
+	{
+		Name:           "(*encoding/xml.Decoder).DecodeElement",
+		Tag:            "xml",
+		ArgPos:         0,
+		ifaceWhitelist: []string{"encoding/xml.Unmarshaler", "encoding.TextUnmarshaler"},
+	},
 
 	// https://github.com/go-yaml/yaml
 	{Name: "gopkg.in/yaml.v3.Marshal", Tag: "yaml", ArgPos: 0},
