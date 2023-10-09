@@ -123,6 +123,7 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, 
 			return // no type info found.
 		}
 
+		// TODO: check nested structs too.
 		if implementsInterface(typ, fn.ifaceWhitelist, pass.Pkg.Imports()) {
 			return // the type implements a Marshaler interface; see issue #64.
 		}
