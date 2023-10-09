@@ -12,6 +12,7 @@ jobs:
     uses: go-simpler/.github/.github/workflows/test.yml@main
     with:
       runs-on: '[ "ubuntu-latest", "windows-latest", "macos-latest" ]'
+      go-versions: '[ "stable" ]' # current "oldstable" (1.20) can't parse the new go.mod format.
   lint:
     uses: go-simpler/.github/.github/workflows/lint.yml@main
   vuln:
