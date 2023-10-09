@@ -20,9 +20,8 @@ func main() {
 
 type versionFlag struct{}
 
-func (versionFlag) IsBoolFlag() bool { return true }
-func (versionFlag) Get() interface{} { return nil }
 func (versionFlag) String() string   { return "" }
+func (versionFlag) IsBoolFlag() bool { return true }
 func (versionFlag) Set(string) error {
 	fmt.Printf("musttag version %s %s/%s\n", version, runtime.GOOS, runtime.GOARCH)
 	os.Exit(0)

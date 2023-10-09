@@ -1,9 +1,4 @@
 package custom
 
-func Marshal(v any) ([]byte, error) {
-	return nil, nil
-}
-
-func Unmarshal(data []byte, v any) error {
-	return nil
-}
+func Marshal(any) ([]byte, error) { return nil, nil }
+func Unmarshal([]byte, any) error { return nil }
