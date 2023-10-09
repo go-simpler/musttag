@@ -1,6 +1,6 @@
 module tests
 
-go 1.21.0
+go 1.21
 
 require (
 	example.com/custom v0.1.0
