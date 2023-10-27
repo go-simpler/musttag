@@ -54,7 +54,7 @@ var builtins = []Func{
 		ifaceWhitelist: []string{"encoding/xml.Unmarshaler", "encoding.TextUnmarshaler"},
 	},
 
-	// https://github.com/go-yaml/yaml
+	// https://pkg.go.dev/gopkg.in/yaml.v3
 	{
 		Name: "gopkg.in/yaml.v3.Marshal", Tag: "yaml", ArgPos: 0,
 		ifaceWhitelist: []string{"gopkg.in/yaml.v3.Marshaler"},
@@ -72,7 +72,7 @@ var builtins = []Func{
 		ifaceWhitelist: []string{"gopkg.in/yaml.v3.Unmarshaler"},
 	},
 
-	// https://github.com/BurntSushi/toml
+	// https://pkg.go.dev/github.com/BurntSushi/toml
 	{
 		Name: "github.com/BurntSushi/toml.Unmarshal", Tag: "toml", ArgPos: 1,
 		ifaceWhitelist: []string{"github.com/BurntSushi/toml.Unmarshaler", "encoding.TextUnmarshaler"},
@@ -98,13 +98,13 @@ var builtins = []Func{
 		ifaceWhitelist: []string{"github.com/BurntSushi/toml.Unmarshaler", "encoding.TextUnmarshaler"},
 	},
 
-	// https://github.com/mitchellh/mapstructure
+	// https://pkg.go.dev/github.com/mitchellh/mapstructure
 	{Name: "github.com/mitchellh/mapstructure.Decode", Tag: "mapstructure", ArgPos: 1},
 	{Name: "github.com/mitchellh/mapstructure.DecodeMetadata", Tag: "mapstructure", ArgPos: 1},
 	{Name: "github.com/mitchellh/mapstructure.WeakDecode", Tag: "mapstructure", ArgPos: 1},
 	{Name: "github.com/mitchellh/mapstructure.WeakDecodeMetadata", Tag: "mapstructure", ArgPos: 1},
 
-	// https://github.com/jmoiron/sqlx
+	// https://pkg.go.dev/github.com/jmoiron/sqlx
 	{Name: "github.com/jmoiron/sqlx.Get", Tag: "db", ArgPos: 1},
 	{Name: "github.com/jmoiron/sqlx.GetContext", Tag: "db", ArgPos: 2},
 	{Name: "github.com/jmoiron/sqlx.Select", Tag: "db", ArgPos: 1},
