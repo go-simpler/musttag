@@ -7,7 +7,6 @@ import (
 	"go/ast"
 	"go/types"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -81,8 +80,6 @@ func flags(funcs *[]Func) flag.FlagSet {
 	return *fs
 }
 
-var trimVendor = regexp.MustCompile("([^*/(]+/vendor/)")
-
 func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, err error) {
 	visit := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	filter := []ast.Node{(*ast.CallExpr)(nil)}
@@ -102,8 +99,7 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, 
 			return // not a static call.
 		}
 
-		name := trimVendor.ReplaceAllString(callee.FullName(), "")
-		fn, ok := funcs[name]
+		fn, ok := funcs[cutVendor(callee.FullName())]
 		if !ok {
 			return // unsupported function.
 		}
@@ -221,7 +217,7 @@ func implementsInterface(typ types.Type, ifaces []string, imports []*types.Packa
 	findScope := func(pkgName string) (*types.Scope, bool) {
 		// fast path: check direct imports (e.g. looking for "encoding/json.Marshaler").
 		for _, direct := range imports {
-			if pkgName == trimVendor.ReplaceAllString(direct.Path(), "") {
+			if pkgName == cutVendor(direct.Path()) {
 				return direct.Scope(), true
 			}
 		}
@@ -229,7 +225,7 @@ func implementsInterface(typ types.Type, ifaces []string, imports []*types.Packa
 		// TODO: only check indirect imports from the package (e.g. "encoding/json") of the analyzed function (e.g. "encoding/json.Marshal").
 		for _, direct := range imports {
 			for _, indirect := range direct.Imports() {
-				if pkgName == trimVendor.ReplaceAllString(indirect.Path(), "") {
+				if pkgName == cutVendor(indirect.Path()) {
 					return indirect.Scope(), true
 				}
 			}
