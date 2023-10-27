@@ -36,12 +36,12 @@ The rational from [Uber Style Guide][1]:
 
 The following packages are supported out of the box:
 
-* [`encoding/json`][2]
-* [`encoding/xml`][3]
-* [`gopkg.in/yaml.v3`][4]
-* [`github.com/BurntSushi/toml`][5]
-* [`github.com/mitchellh/mapstructure`][6]
-* [`github.com/jmoiron/sqlx`][7]
+* [encoding/json][2]
+* [encoding/xml][3]
+* [gopkg.in/yaml.v3][4]
+* [github.com/BurntSushi/toml][5]
+* [github.com/mitchellh/mapstructure][6]
+* [github.com/jmoiron/sqlx][7]
 
 In addition, any [custom package](#custom-packages) can be added to the list.
 
@@ -69,14 +69,14 @@ When using `sloglint` standalone, pass the options as flags.
 ### Custom packages
 
 To report a custom function, you need to add its description to `.golangci.yml`.
-The following is an example of adding support for the `hclsimple.DecodeFile` function from [`github.com/hashicorp/hcl`][11]:
+The following is an example of adding support for [`hclsimple.Decode`][11]:
 
 ```yaml
 linters-settings:
   musttag:
     functions:
         # The full name of the function, including the package.
-      - name: github.com/hashicorp/hcl/v2/hclsimple.DecodeFile
+      - name: github.com/hashicorp/hcl/v2/hclsimple.Decode
         # The struct tag whose presence should be ensured.
         tag: hcl
         # The position of the argument to check.
@@ -92,11 +92,11 @@ musttag -fn="github.com/hashicorp/hcl/v2/hclsimple.DecodeFile:hcl:2" ./...
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
 [2]: https://pkg.go.dev/encoding/json
 [3]: https://pkg.go.dev/encoding/xml
-[4]: https://github.com/go-yaml/yaml
-[5]: https://github.com/BurntSushi/toml
-[6]: https://github.com/mitchellh/mapstructure
-[7]: https://github.com/jmoiron/sqlx
+[4]: https://pkg.go.dev/gopkg.in/yaml.v3
+[5]: https://pkg.go.dev/github.com/BurntSushi/toml
+[6]: https://pkg.go.dev/github.com/mitchellh/mapstructure
+[7]: https://pkg.go.dev/github.com/jmoiron/sqlx
 [8]: https://golangci-lint.run
 [9]: https://github.com/go-simpler/musttag/releases
 [10]: https://golangci-lint.run/usage/linters/#musttag
-[11]: https://github.com/hashicorp/hcl
+[11]: https://pkg.go.dev/github.com/hashicorp/hcl/v2/hclsimple#Decode
