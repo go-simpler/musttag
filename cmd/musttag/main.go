@@ -6,7 +6,7 @@ import (
 	"os"
 	"runtime"
 
-	"go.tmz.dev/musttag"
+	"go-simpler.org/musttag"
 	"golang.org/x/tools/go/analysis/singlechecker"
 )
 

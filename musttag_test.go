@@ -29,7 +29,7 @@ func TestAnalyzer(t *testing.T) {
 			Func{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
 		)
 		err := analysistest.Run(nopT{}, testdata, analyzer, "tests")[0].Err
-		assert.Equal[E](t, err.Error(), "Func.ArgPos cannot be 10: encoding/json.Marshal accepts only 1 argument(s)")
+		assert.Equal[E](t, err.Error(), "musttag: Func.ArgPos cannot be 10: encoding/json.Marshal accepts only 1 argument(s)")
 	})
 }
 

@@ -105,7 +105,7 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, 
 		}
 
 		if len(call.Args) <= fn.ArgPos {
-			err = fmt.Errorf("Func.ArgPos cannot be %d: %s accepts only %d argument(s)", fn.ArgPos, fn.Name, len(call.Args))
+			err = fmt.Errorf("musttag: Func.ArgPos cannot be %d: %s accepts only %d argument(s)", fn.ArgPos, fn.Name, len(call.Args))
 			return
 		}
 

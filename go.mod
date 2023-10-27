@@ -1,4 +1,4 @@
-module go.tmz.dev/musttag
+module go-simpler.org/musttag
 
 go 1.20
 
