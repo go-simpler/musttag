@@ -138,7 +138,7 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, 
 			return // nothing to report.
 		}
 
-		pass.Reportf(call.Pos(), "the given struct should be annotated with the `%s` tag", fn.Tag)
+		pass.Reportf(arg.Pos(), "the given struct should be annotated with the `%s` tag", fn.Tag)
 	})
 
 	return nil, err
