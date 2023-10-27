@@ -63,7 +63,7 @@ func (nopT) Errorf(string, ...any) {}
 func setupModules(t *testing.T, testdata string) {
 	t.Helper()
 
-	err := os.Chdir(filepath.Join(testdata, "src", "tests"))
+	err := os.Chdir(filepath.Join(testdata, "src"))
 	assert.NoErr[F](t, err)
 
 	err = exec.Command("go", "mod", "vendor").Run()

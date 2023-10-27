@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	getwd = os.Getwd
-
+	getwd         = os.Getwd
 	commandOutput = func(name string, args ...string) (string, error) {
 		output, err := exec.Command(name, args...).Output()
 		return string(output), err
@@ -54,4 +53,22 @@ func getMainModule() (string, error) {
 			return module.Path, nil
 		}
 	}
+}
+
+// based on golang.org/x/tools/imports.VendorlessPath
+func cutVendor(path string) string {
+	var prefix string
+	switch {
+	case strings.HasPrefix(path, "(*"):
+		prefix, path = "(*", path[len("(*"):]
+	case strings.HasPrefix(path, "("):
+		prefix, path = "(", path[len("("):]
+	}
+	if i := strings.LastIndex(path, "/vendor/"); i >= 0 {
+		return prefix + path[i+len("/vendor/"):]
+	}
+	if strings.HasPrefix(path, "vendor/") {
+		return prefix + path[len("vendor/"):]
+	}
+	return prefix + path
 }
