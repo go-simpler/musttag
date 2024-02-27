@@ -66,6 +66,6 @@ func setupModules(t *testing.T, testdata string) {
 	err := os.Chdir(filepath.Join(testdata, "src"))
 	assert.NoErr[F](t, err)
 
-	err = exec.Command("go", "mod", "vendor").Run()
+	err = exec.Command("go", "work", "vendor").Run()
 	assert.NoErr[F](t, err)
 }

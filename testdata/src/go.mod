@@ -10,4 +10,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace example.com/custom => ./custom
+replace example.com/custom => ./example.com/custom
