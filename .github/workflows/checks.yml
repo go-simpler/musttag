@@ -12,6 +12,7 @@ jobs:
     uses: go-simpler/.github/.github/workflows/test.yml@main
     with:
       runs-on: '[ "ubuntu-latest", "windows-latest", "macos-latest" ]'
+      go-versions: '[ "stable" ]'
   lint:
     uses: go-simpler/.github/.github/workflows/lint.yml@main
   vuln:
