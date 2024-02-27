@@ -51,6 +51,62 @@ func embeddedType() {
 	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag"
 }
 
+func nestedArrayType() {
+	type Bar struct {
+		NoTag string
+	}
+	type Foo struct {
+		Bars [5]Bar `json:"bars"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&foo)   // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(Foo{})  // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag"
+}
+
+func nestedSliceType() {
+	type Bar struct {
+		NoTag string
+	}
+	type Foo struct {
+		Bars []Bar `json:"bars"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&foo)   // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(Foo{})  // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag"
+}
+
+func nestedMapType() {
+	type Bar struct {
+		NoTag string
+	}
+	type Foo struct {
+		Bars map[string]Bar `json:"bars"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&foo)   // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(Foo{})  // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag"
+}
+
+func nestedComplexType() {
+	type Bar struct {
+		NoTag string
+	}
+	type Foo struct {
+		Bars **[][]map[string][][5][5]map[string]*Bar `json:"bars"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&foo)   // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(Foo{})  // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag"
+}
+
 func recursiveType() {
 	// should not cause panic; see issue #16.
 	type Foo struct {
