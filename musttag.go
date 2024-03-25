@@ -119,22 +119,14 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, 
 			return // no type info found.
 		}
 
-		// TODO: check nested structs too.
-		if implementsInterface(typ, fn.ifaceWhitelist, pass.Pkg.Imports()) {
-			return // the type implements a Marshaler interface; see issue #64.
-		}
-
 		checker := checker{
-			mainModule: mainModule,
-			seenTypes:  make(map[string]struct{}),
+			mainModule:     mainModule,
+			seenTypes:      make(map[string]struct{}),
+			ifaceWhitelist: fn.ifaceWhitelist,
+			imports:        pass.Pkg.Imports(),
 		}
 
-		styp, ok := checker.parseStruct(typ)
-		if !ok {
-			return // not a struct.
-		}
-
-		if valid := checker.checkStruct(styp, fn.Tag); valid {
+		if valid := checker.checkType(typ, fn.Tag); valid {
 			return // nothing to report.
 		}
 
@@ -145,8 +137,28 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, 
 }
 
 type checker struct {
-	mainModule string
-	seenTypes  map[string]struct{}
+	mainModule     string
+	seenTypes      map[string]struct{}
+	ifaceWhitelist []string
+	imports        []*types.Package
+}
+
+func (c *checker) checkType(typ types.Type, tag string) bool {
+	if _, ok := c.seenTypes[typ.String()]; ok {
+		return true // already checked.
+	}
+	c.seenTypes[typ.String()] = struct{}{}
+
+	if implementsInterface(typ, c.ifaceWhitelist, c.imports) {
+		return true // the type implements a Marshaler interface; see issue #64.
+	}
+
+	styp, ok := c.parseStruct(typ)
+	if !ok {
+		return true // not a struct.
+	}
+
+	return c.checkStruct(styp, tag)
 }
 
 func (c *checker) parseStruct(typ types.Type) (*types.Struct, bool) {
@@ -186,8 +198,6 @@ func (c *checker) parseStruct(typ types.Type) (*types.Struct, bool) {
 }
 
 func (c *checker) checkStruct(styp *types.Struct, tag string) (valid bool) {
-	c.seenTypes[styp.String()] = struct{}{}
-
 	for i := 0; i < styp.NumFields(); i++ {
 		field := styp.Field(i)
 		if !field.Exported() {
@@ -201,14 +211,7 @@ func (c *checker) checkStruct(styp *types.Struct, tag string) (valid bool) {
 			}
 		}
 
-		nested, ok := c.parseStruct(field.Type())
-		if !ok {
-			continue
-		}
-		if _, ok := c.seenTypes[nested.String()]; ok {
-			continue
-		}
-		if valid := c.checkStruct(nested, tag); !valid {
+		if valid := c.checkType(field.Type(), tag); !valid {
 			return false
 		}
 	}
