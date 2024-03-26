@@ -130,3 +130,22 @@ func shouldBeIgnored() {
 	json.Marshal(0)   // a non-struct argument.
 	json.Marshal(nil) // nil argument, see issue #20.
 }
+
+type WithInterface struct {
+	NoTag string
+}
+
+func (w WithInterface) MarshalJSON() ([]byte, error) {
+	return json.Marshal(w.NoTag)
+}
+
+func nestedTypeWithInterface() {
+	type Foo struct {
+		Nested WithInterface `json:"nested"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // no error
+	json.Marshal(&foo)   // no error
+	json.Marshal(Foo{})  // no error
+	json.Marshal(&Foo{}) // no error
+}
