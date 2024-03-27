@@ -149,3 +149,18 @@ func nestedTypeWithInterface() {
 	json.Marshal(Foo{})  // no error
 	json.Marshal(&Foo{}) // no error
 }
+
+func ignoredNestedType() {
+	type Nested struct {
+		NoTag string
+	}
+	type Foo struct {
+		Ignored  Nested `json:"-"`
+		Exported string `json:"exported"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // no error
+	json.Marshal(&foo)   // no error
+	json.Marshal(Foo{})  // no error
+	json.Marshal(&Foo{}) // no error
+}

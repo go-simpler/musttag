@@ -204,11 +204,17 @@ func (c *checker) checkStruct(styp *types.Struct, tag string) (valid bool) {
 			continue
 		}
 
-		if _, ok := reflect.StructTag(styp.Tag(i)).Lookup(tag); !ok {
+		tagValue, ok := reflect.StructTag(styp.Tag(i)).Lookup(tag)
+		if !ok {
 			// tag is not required for embedded types; see issue #12.
 			if !field.Embedded() {
 				return false
 			}
+		}
+
+		// Do not recurse into ignored fields.
+		if tagValue == "-" {
+			return true
 		}
 
 		if valid := c.checkType(field.Type(), tag); !valid {
