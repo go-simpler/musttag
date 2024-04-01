@@ -1,5 +1,5 @@
-go-simpler.org/assert v0.7.0 h1:OzWWZqfNxt8cLS+MlUp6Tgk1HjPkmgdKBq9qvy8lZsA=
-go-simpler.org/assert v0.7.0/go.mod h1:74Eqh5eI6vCK6Y5l3PI8ZYFXG4Sa+tkr70OIPJAUr28=
+go-simpler.org/assert v0.8.0 h1:oSAOlbh+stu205f0mTlWWcJWGt7IXl4GDk8yhFKwQyk=
+go-simpler.org/assert v0.8.0/go.mod h1:BS+ly62ckxu0VRJPNpUmkUbyYpt1/uwxkdmH1tX1s+A=
 golang.org/x/mod v0.16.0 h1:QX4fJ0Rr5cPQCF7O9lh9Se4pmwfwskqZfq5moyldzic=
 golang.org/x/mod v0.16.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
 golang.org/x/sync v0.6.0 h1:5BMeUDZ7vkXGfEr1x9B4bRcTH4lpkTkpdh0T/J+qjbQ=
