@@ -51,6 +51,17 @@ func testJSON() {
 	json.NewDecoder(nil).Decode(&tm)
 }
 
+func testJSONIndirectSlice() {
+	type WithMarshallableSlice struct {
+		List []Marshaler `json:"marshallable"`
+	}
+	var withMarshallableSlice WithMarshallableSlice
+
+	json.Marshal(withMarshallableSlice)
+	json.MarshalIndent(withMarshallableSlice, "", "")
+	json.NewEncoder(nil).Encode(withMarshallableSlice)
+}
+
 func testXML() {
 	var st Struct
 	xml.Marshal(st)                                             // want "the given struct should be annotated with the `xml` tag"
