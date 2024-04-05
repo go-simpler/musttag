@@ -164,3 +164,14 @@ func ignoredNestedType() {
 	json.Marshal(Foo{})  // no error
 	json.Marshal(&Foo{}) // no error
 }
+
+func interfaceSliceType() {
+	type WithMarshallableSlice struct {
+		List []Marshaler `json:"marshallable"`
+	}
+	var withMarshallableSlice WithMarshallableSlice
+
+	json.Marshal(withMarshallableSlice)
+	json.MarshalIndent(withMarshallableSlice, "", "")
+	json.NewEncoder(nil).Encode(withMarshallableSlice)
+}

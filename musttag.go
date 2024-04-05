@@ -149,10 +149,6 @@ func (c *checker) checkType(typ types.Type, tag string) bool {
 	}
 	c.seenTypes[typ.String()] = struct{}{}
 
-	if implementsInterface(typ, c.ifaceWhitelist, c.imports) {
-		return true // the type implements a Marshaler interface; see issue #64.
-	}
-
 	styp, ok := c.parseStruct(typ)
 	if !ok {
 		return true // not a struct.
@@ -161,7 +157,19 @@ func (c *checker) checkType(typ types.Type, tag string) bool {
 	return c.checkStruct(styp, tag)
 }
 
+// recursively unwrap a type until we get to an underlying
+// raw struct type that should have its fields checked
+//
+//	SomeStruct -> struct{SomeStructField: ... }
+//	[]*SomeStruct -> struct{SomeStructField: ... }
+//	...
+//
+// exits early if it hits a type that implements a whitelisted interface
 func (c *checker) parseStruct(typ types.Type) (*types.Struct, bool) {
+	if implementsInterface(typ, c.ifaceWhitelist, c.imports) {
+		return nil, false // the type implements a Marshaler interface; see issue #64.
+	}
+
 	switch typ := typ.(type) {
 	case *types.Pointer:
 		return c.parseStruct(typ.Elem())
