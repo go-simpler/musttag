@@ -149,43 +149,40 @@ func (c *checker) checkType(typ types.Type, tag string) bool {
 	}
 	c.seenTypes[typ.String()] = struct{}{}
 
-	styp, shouldCheckStruct := c.unwrapStructType(typ)
-	if !shouldCheckStruct {
+	styp, ok := c.parseStruct(typ)
+	if !ok {
 		return true // not a struct.
 	}
 
 	return c.checkStruct(styp, tag)
 }
 
-// recursively unpack a type to the next type that needs checking,
-// until we get to some underlying struct for checking
+// recursively unwrap a type until we get to an underlying
+// raw struct type that should have its fields checked
 //
 //	SomeStruct -> struct{SomeStructField: ... }
 //	[]*SomeStruct -> struct{SomeStructField: ... }
 //	...
 //
 // exits early if it hits a type that implements a whitelisted interface
-func (c *checker) unwrapStructType(typ types.Type) (*types.Struct, bool) {
-	fmt.Println("unwrapStructType", typ, c.ifaceWhitelist, c.imports)
+func (c *checker) parseStruct(typ types.Type) (*types.Struct, bool) {
 
 	if implementsInterface(typ, c.ifaceWhitelist, c.imports) {
-		fmt.Println("  - unwrapStructType exit early implements!")
 		return nil, false // the type implements a Marshaler interface; see issue #64.
 	}
 
 	switch typ := typ.(type) {
 	case *types.Pointer:
-		return c.unwrapStructType(typ.Elem())
+		return c.parseStruct(typ.Elem())
 
 	case *types.Array:
-		return c.unwrapStructType(typ.Elem())
+		return c.parseStruct(typ.Elem())
 
 	case *types.Slice:
-		fmt.Println("elem!:", typ.Elem())
-		return c.unwrapStructType(typ.Elem())
+		return c.parseStruct(typ.Elem())
 
 	case *types.Map:
-		return c.unwrapStructType(typ.Elem())
+		return c.parseStruct(typ.Elem())
 
 	case *types.Named: // a struct of the named type.
 		pkg := typ.Obj().Pkg()
