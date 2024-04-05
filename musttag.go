@@ -166,7 +166,6 @@ func (c *checker) checkType(typ types.Type, tag string) bool {
 //
 // exits early if it hits a type that implements a whitelisted interface
 func (c *checker) parseStruct(typ types.Type) (*types.Struct, bool) {
-
 	if implementsInterface(typ, c.ifaceWhitelist, c.imports) {
 		return nil, false // the type implements a Marshaler interface; see issue #64.
 	}
