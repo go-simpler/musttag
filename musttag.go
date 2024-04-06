@@ -222,7 +222,7 @@ func (c *checker) checkStruct(styp *types.Struct, tag string) (valid bool) {
 
 		// Do not recurse into ignored fields.
 		if tagValue == "-" {
-			return true
+			continue
 		}
 
 		if valid := c.checkType(field.Type(), tag); !valid {
