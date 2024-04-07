@@ -165,6 +165,22 @@ func ignoredNestedType() {
 	json.Marshal(&Foo{}) // no error
 }
 
+func ignoredNestedTypeWithSubsequentNoTagField() {
+	type Nested struct {
+		NoTag string
+	}
+	type Foo struct {
+		Ignored  Nested `json:"-"`
+		Exported string `json:"exported"`
+		NoTag    string
+	}
+	var foo Foo
+	json.Marshal(foo)    // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&foo)   // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(Foo{})  // want "the given struct should be annotated with the `json` tag"
+	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag"
+}
+
 func interfaceSliceType() {
 	type WithMarshallableSlice struct {
 		List []Marshaler `json:"marshallable"`
