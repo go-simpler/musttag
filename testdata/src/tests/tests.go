@@ -191,3 +191,20 @@ func interfaceSliceType() {
 	json.MarshalIndent(withMarshallableSlice, "", "")
 	json.NewEncoder(nil).Encode(withMarshallableSlice)
 }
+
+func fieldPath() {
+	type NestedB struct {
+		NestedBField string
+	}
+	type NestedA struct {
+		NestedAField NestedB `json:"NestedAField"`
+	}
+	type Foo struct {
+		FieldA NestedA `json:"FieldA"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBField"
+	json.Marshal(&foo)   // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBField"
+	json.Marshal(Foo{})  // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBField"
+	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBField"
+}

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/token"
 	"go/types"
 	"reflect"
 	"strconv"
@@ -27,17 +28,27 @@ type Func struct {
 	ifaceWhitelist []string
 }
 
+// Settings contains the configuration for the musttag analyzer.
+type Settings struct {
+	Funcs   []Func // Custom functions to report.
+	Verbose bool   // Output verbose information, like the field name path and position.
+}
+
 // New creates a new musttag analyzer.
-// To report a custom function, provide its description as [Func].
-func New(funcs ...Func) *analysis.Analyzer {
-	var flagFuncs []Func
+// To report a custom function, provide its description as [Settings.Funcs].
+func New(settings *Settings) *analysis.Analyzer {
+	if settings == nil {
+		settings = &Settings{}
+	}
+	flagSettings := &Settings{}
+
 	return &analysis.Analyzer{
 		Name:     "musttag",
 		Doc:      "enforce field tags in (un)marshaled structs",
-		Flags:    flags(&flagFuncs),
+		Flags:    flags(flagSettings),
 		Requires: []*analysis.Analyzer{inspect.Analyzer},
 		Run: func(pass *analysis.Pass) (any, error) {
-			l := len(builtins) + len(funcs) + len(flagFuncs)
+			l := len(builtins) + len(settings.Funcs) + len(flagSettings.Funcs)
 			allFuncs := make(map[string]Func, l)
 
 			merge := func(slice []Func) {
@@ -46,20 +57,20 @@ func New(funcs ...Func) *analysis.Analyzer {
 				}
 			}
 			merge(builtins)
-			merge(funcs)
-			merge(flagFuncs)
+			merge(settings.Funcs)
+			merge(flagSettings.Funcs)
 
 			mainModule, err := getMainModule()
 			if err != nil {
 				return nil, err
 			}
 
-			return run(pass, mainModule, allFuncs)
+			return run(pass, mainModule, allFuncs, settings.Verbose || flagSettings.Verbose)
 		},
 	}
 }
 
-func flags(funcs *[]Func) flag.FlagSet {
+func flags(settings *Settings) flag.FlagSet {
 	fs := flag.NewFlagSet("musttag", flag.ContinueOnError)
 	fs.Func("fn", "report a custom function (name:tag:arg-pos)", func(s string) error {
 		parts := strings.Split(s, ":")
@@ -70,17 +81,18 @@ func flags(funcs *[]Func) flag.FlagSet {
 		if err != nil {
 			return err
 		}
-		*funcs = append(*funcs, Func{
+		settings.Funcs = append(settings.Funcs, Func{
 			Name:   parts[0],
 			Tag:    parts[1],
 			ArgPos: pos,
 		})
 		return nil
 	})
+	fs.BoolVar(&settings.Verbose, "verbose", false, "verbose output")
 	return *fs
 }
 
-func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, err error) {
+func run(pass *analysis.Pass, mainModule string, funcs map[string]Func, verbose bool) (_ any, err error) {
 	visit := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	filter := []ast.Node{(*ast.CallExpr)(nil)}
 
@@ -124,13 +136,12 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func) (_ any, 
 			seenTypes:      make(map[string]struct{}),
 			ifaceWhitelist: fn.ifaceWhitelist,
 			imports:        pass.Pkg.Imports(),
+			pass:           pass,
+			pos:            arg.Pos(),
+			verbose:        verbose,
 		}
 
-		if valid := checker.checkType(typ, fn.Tag); valid {
-			return // nothing to report.
-		}
-
-		pass.Reportf(arg.Pos(), "the given struct should be annotated with the `%s` tag", fn.Tag)
+		checker.checkType(typ, fn.Tag, "")
 	})
 
 	return nil, err
@@ -141,9 +152,12 @@ type checker struct {
 	seenTypes      map[string]struct{}
 	ifaceWhitelist []string
 	imports        []*types.Package
+	pass           *analysis.Pass
+	pos            token.Pos
+	verbose        bool
 }
 
-func (c *checker) checkType(typ types.Type, tag string) bool {
+func (c *checker) checkType(typ types.Type, tag, fieldPath string) bool {
 	if _, ok := c.seenTypes[typ.String()]; ok {
 		return true // already checked.
 	}
@@ -154,7 +168,7 @@ func (c *checker) checkType(typ types.Type, tag string) bool {
 		return true // not a struct.
 	}
 
-	return c.checkStruct(styp, tag)
+	return c.checkStruct(styp, tag, fieldPath)
 }
 
 // recursively unwrap a type until we get to an underlying
@@ -205,7 +219,7 @@ func (c *checker) parseStruct(typ types.Type) (*types.Struct, bool) {
 	}
 }
 
-func (c *checker) checkStruct(styp *types.Struct, tag string) (valid bool) {
+func (c *checker) checkStruct(styp *types.Struct, tag, fieldPath string) bool {
 	for i := 0; i < styp.NumFields(); i++ {
 		field := styp.Field(i)
 		if !field.Exported() {
@@ -216,6 +230,11 @@ func (c *checker) checkStruct(styp *types.Struct, tag string) (valid bool) {
 		if !ok {
 			// tag is not required for embedded types; see issue #12.
 			if !field.Embedded() {
+				reportStr := fmt.Sprintf("the given struct should be annotated with the `%s` tag", tag)
+				if c.verbose {
+					reportStr = fmt.Sprintf("%s: %s.%s (%s)", reportStr, fieldPath, field.Name(), c.pass.Fset.Position(field.Pos()).String())
+				}
+				c.pass.Reportf(c.pos, reportStr)
 				return false
 			}
 		}
@@ -225,7 +244,7 @@ func (c *checker) checkStruct(styp *types.Struct, tag string) (valid bool) {
 			continue
 		}
 
-		if valid := c.checkType(field.Type(), tag); !valid {
+		if valid := c.checkType(field.Type(), tag, fmt.Sprintf("%s.%s", fieldPath, field.Name())); !valid {
 			return false
 		}
 	}

@@ -6,8 +6,9 @@ import (
 	"os"
 	"runtime"
 
-	"go-simpler.org/musttag"
 	"golang.org/x/tools/go/analysis/singlechecker"
+
+	"go-simpler.org/musttag"
 )
 
 var version = "dev" // injected at build time.
@@ -15,7 +16,7 @@ var version = "dev" // injected at build time.
 func main() {
 	// override the builtin -V flag.
 	flag.Var(versionFlag{}, "V", "print version and exit")
-	singlechecker.Main(musttag.New())
+	singlechecker.Main(musttag.New(&musttag.Settings{}))
 }
 
 type versionFlag struct{}
