@@ -5,9 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
-	"go/token"
 	"go/types"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -136,12 +136,25 @@ func run(pass *analysis.Pass, mainModule string, funcs map[string]Func, verbose 
 			seenTypes:      make(map[string]struct{}),
 			ifaceWhitelist: fn.ifaceWhitelist,
 			imports:        pass.Pkg.Imports(),
-			pass:           pass,
-			pos:            arg.Pos(),
-			verbose:        verbose,
+			reports:        make(map[*types.Var]string),
 		}
 
 		checker.checkType(typ, fn.Tag, "")
+		if len(checker.reports) == 0 {
+			return // no reports.
+		}
+
+		reportStr := fmt.Sprintf("the given struct should be annotated with the `%s` tag", fn.Tag)
+		if verbose {
+			var reportStrs []string
+			for field, fieldPath := range checker.reports {
+				reportStrs = append(reportStrs, fmt.Sprintf("%s.%s (%s)", fieldPath, field.Name(), pass.Fset.Position(field.Pos()).String()))
+			}
+			slices.Sort(reportStrs)
+			reportStr = fmt.Sprintf("%s: %s", reportStr, strings.Join(reportStrs, ", "))
+		}
+
+		pass.Reportf(arg.Pos(), reportStr)
 	})
 
 	return nil, err
@@ -152,23 +165,21 @@ type checker struct {
 	seenTypes      map[string]struct{}
 	ifaceWhitelist []string
 	imports        []*types.Package
-	pass           *analysis.Pass
-	pos            token.Pos
-	verbose        bool
+	reports        map[*types.Var]string
 }
 
-func (c *checker) checkType(typ types.Type, tag, fieldPath string) bool {
+func (c *checker) checkType(typ types.Type, tag, fieldPath string) {
 	if _, ok := c.seenTypes[typ.String()]; ok {
-		return true // already checked.
+		return // already checked.
 	}
 	c.seenTypes[typ.String()] = struct{}{}
 
 	styp, ok := c.parseStruct(typ)
 	if !ok {
-		return true // not a struct.
+		return // not a struct.
 	}
 
-	return c.checkStruct(styp, tag, fieldPath)
+	c.checkStruct(styp, tag, fieldPath)
 }
 
 // recursively unwrap a type until we get to an underlying
@@ -219,7 +230,7 @@ func (c *checker) parseStruct(typ types.Type) (*types.Struct, bool) {
 	}
 }
 
-func (c *checker) checkStruct(styp *types.Struct, tag, fieldPath string) bool {
+func (c *checker) checkStruct(styp *types.Struct, tag, fieldPath string) {
 	for i := 0; i < styp.NumFields(); i++ {
 		field := styp.Field(i)
 		if !field.Exported() {
@@ -230,12 +241,7 @@ func (c *checker) checkStruct(styp *types.Struct, tag, fieldPath string) bool {
 		if !ok {
 			// tag is not required for embedded types; see issue #12.
 			if !field.Embedded() {
-				reportStr := fmt.Sprintf("the given struct should be annotated with the `%s` tag", tag)
-				if c.verbose {
-					reportStr = fmt.Sprintf("%s: %s.%s (%s)", reportStr, fieldPath, field.Name(), c.pass.Fset.Position(field.Pos()).String())
-				}
-				c.pass.Reportf(c.pos, reportStr)
-				return false
+				c.reports[field] = fieldPath
 			}
 		}
 
@@ -244,12 +250,8 @@ func (c *checker) checkStruct(styp *types.Struct, tag, fieldPath string) bool {
 			continue
 		}
 
-		if valid := c.checkType(field.Type(), tag, fmt.Sprintf("%s.%s", fieldPath, field.Name())); !valid {
-			return false
-		}
+		c.checkType(field.Type(), tag, fmt.Sprintf("%s.%s", fieldPath, field.Name()))
 	}
-
-	return true
 }
 
 func implementsInterface(typ types.Type, ifaces []string, imports []*types.Package) bool {
