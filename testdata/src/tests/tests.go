@@ -131,23 +131,17 @@ func shouldBeIgnored() {
 	json.Marshal(nil) // nil argument, see issue #20.
 }
 
-type WithInterface struct {
-	NoTag string
-}
-
-func (w WithInterface) MarshalJSON() ([]byte, error) {
-	return json.Marshal(w.NoTag)
-}
-
 func nestedTypeWithInterface() {
 	type Foo struct {
-		Nested WithInterface `json:"nested"`
+		Nested Marshaler `json:"nested"`
 	}
 	var foo Foo
-	json.Marshal(foo)    // no error
-	json.Marshal(&foo)   // no error
-	json.Marshal(Foo{})  // no error
-	json.Marshal(&Foo{}) // no error
+	json.Marshal(foo)
+	json.Marshal(&foo)
+	json.Marshal(Foo{})
+	json.Marshal(&Foo{})
+	json.Unmarshal(nil, &foo)
+	json.Unmarshal(nil, &Foo{})
 }
 
 func ignoredNestedType() {
@@ -159,10 +153,10 @@ func ignoredNestedType() {
 		Exported string `json:"exported"`
 	}
 	var foo Foo
-	json.Marshal(foo)    // no error
-	json.Marshal(&foo)   // no error
-	json.Marshal(Foo{})  // no error
-	json.Marshal(&Foo{}) // no error
+	json.Marshal(foo)
+	json.Marshal(&foo)
+	json.Marshal(Foo{})
+	json.Marshal(&Foo{})
 }
 
 func ignoredNestedTypeWithSubsequentNoTagField() {
