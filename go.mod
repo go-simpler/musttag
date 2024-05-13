@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	go-simpler.org/assert v0.9.0
-	golang.org/x/tools v0.20.0
+	golang.org/x/tools v0.21.0
 )
 
 require (
