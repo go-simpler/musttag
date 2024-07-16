@@ -89,6 +89,24 @@ The same can be done via the `-fn=<name:tag:arg-pos>` flag when using `musttag` 
 musttag -fn="github.com/hashicorp/hcl/v2/hclsimple.DecodeFile:hcl:2" ./...
 ```
 
+### Verbose Output
+
+Verbose output includes the field name path and position.
+To enable verbose output, you can set `verbose` field in `.golangci.yml`.
+
+```yaml
+linters-settings:
+  musttag:
+    # Output verbose information, like the field name path and position.
+    verbose: true
+```
+
+The same can be done via the `-verbose` flag when using `musttag` standalone:
+
+```shell
+musttag -verbose ./...
+```
+
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
 [2]: https://pkg.go.dev/encoding/json
 [3]: https://pkg.go.dev/encoding/xml

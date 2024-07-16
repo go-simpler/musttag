@@ -17,29 +17,35 @@ func TestAnalyzer(t *testing.T) {
 	setupModules(t, testdata)
 
 	t.Run("tests", func(t *testing.T) {
-		analyzer := New(
-			Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
-			Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
-		)
+		analyzer := New(&Settings{
+			Funcs: []Func{
+				{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
+				{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
+			},
+			Verbose: true,
+		})
 		analysistest.Run(t, testdata, analyzer, "tests")
 	})
 
 	t.Run("bad Func.ArgPos", func(t *testing.T) {
-		analyzer := New(
-			Func{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
-		)
+		analyzer := New(&Settings{
+			Funcs: []Func{
+				{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
+			},
+			Verbose: true,
+		})
 		err := analysistest.Run(nopT{}, testdata, analyzer, "tests")[0].Err
 		assert.Equal[E](t, err.Error(), "musttag: Func.ArgPos cannot be 10: encoding/json.Marshal accepts only 1 argument(s)")
 	})
 }
 
 func TestFlags(t *testing.T) {
-	analyzer := New()
+	analyzer := New(&Settings{})
 	analyzer.Flags.Usage = func() {}
 	analyzer.Flags.SetOutput(io.Discard)
 
 	t.Run("ok", func(t *testing.T) {
-		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:0"})
+		err := analyzer.Flags.Parse([]string{"-fn=test.Test:test:0", "-verbose=true"})
 		assert.NoErr[E](t, err)
 	})
 
