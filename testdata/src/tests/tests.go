@@ -185,3 +185,39 @@ func interfaceSliceType() {
 	json.MarshalIndent(withMarshallableSlice, "", "")
 	json.NewEncoder(nil).Encode(withMarshallableSlice)
 }
+
+func fieldPath() {
+	type NestedB struct {
+		NestedBNoTagField string
+	}
+	type NestedA struct {
+		NestedAField      NestedB `json:"NestedAField"`
+		NestedANoTagField string
+	}
+	type Foo struct {
+		FieldA NestedA `json:"FieldA"`
+	}
+	var foo Foo
+	json.Marshal(foo)    // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBNoTagField \\([^)]+\\), \\.FieldA\\.NestedANoTagField \\([^)]+\\)"
+	json.Marshal(&foo)   // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBNoTagField \\([^)]+\\), \\.FieldA\\.NestedANoTagField \\([^)]+\\)"
+	json.Marshal(Foo{})  // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBNoTagField \\([^)]+\\), \\.FieldA\\.NestedANoTagField \\([^)]+\\)"
+	json.Marshal(&Foo{}) // want "the given struct should be annotated with the `json` tag: \\.FieldA\\.NestedAField\\.NestedBNoTagField \\([^)]+\\), \\.FieldA\\.NestedANoTagField \\([^)]+\\)"
+}
+
+type FieldPathNestedBar struct {
+	BarA *FieldPathNestedFoo `json:"BarA"`
+	BarB string
+}
+
+type FieldPathNestedFoo struct {
+	FooA *FieldPathNestedBar `json:"FooA"`
+	FooB string
+}
+
+func fieldPathNested() {
+	var foo FieldPathNestedFoo
+	json.Marshal(foo)                   // want "the given struct should be annotated with the `json` tag: \\.FooA\\.BarB \\([^)]+\\), \\.FooB \\([^)]+\\)"
+	json.Marshal(&foo)                  // want "the given struct should be annotated with the `json` tag: \\.FooA\\.BarB \\([^)]+\\), \\.FooB \\([^)]+\\)"
+	json.Marshal(FieldPathNestedFoo{})  // want "the given struct should be annotated with the `json` tag: \\.FooA\\.BarB \\([^)]+\\), \\.FooB \\([^)]+\\)"
+	json.Marshal(&FieldPathNestedFoo{}) // want "the given struct should be annotated with the `json` tag: \\.FooA\\.BarB \\([^)]+\\), \\.FooB \\([^)]+\\)"
+}
