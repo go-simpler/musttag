@@ -28,6 +28,10 @@ type TextMarshaler struct{ NoTag string }
 func (TextMarshaler) MarshalText() ([]byte, error) { return nil, nil }
 func (*TextMarshaler) UnmarshalText([]byte) error  { return nil }
 
+type Scanner struct{ NotTag string }
+
+func (*Scanner) Scan(any) error { return nil }
+
 func testJSON() {
 	var st Struct
 	json.Marshal(st)                 // want "the given struct should be annotated with the `json` tag"
@@ -154,6 +158,33 @@ func testSQLX() {
 	new(sqlx.Tx).GetContext(nil, &st, "")            // want "the given struct should be annotated with the `db` tag"
 	new(sqlx.Tx).Select(&st, "")                     // want "the given struct should be annotated with the `db` tag"
 	new(sqlx.Tx).SelectContext(nil, &st, "")         // want "the given struct should be annotated with the `db` tag"
+
+	var sc Scanner
+	sqlx.Get(nil, &sc, "")
+	sqlx.GetContext(nil, nil, &sc, "")
+	sqlx.Select(nil, &sc, "")
+	sqlx.SelectContext(nil, nil, &sc, "")
+	sqlx.StructScan(nil, &sc)
+	new(sqlx.Conn).GetContext(nil, &sc, "")
+	new(sqlx.Conn).SelectContext(nil, &sc, "")
+	new(sqlx.DB).Get(&sc, "")
+	new(sqlx.DB).GetContext(nil, &sc, "")
+	new(sqlx.DB).Select(&sc, "")
+	new(sqlx.DB).SelectContext(nil, &sc, "")
+	new(sqlx.NamedStmt).Get(&sc, nil)
+	new(sqlx.NamedStmt).GetContext(nil, &sc, nil)
+	new(sqlx.NamedStmt).Select(&sc, nil)
+	new(sqlx.NamedStmt).SelectContext(nil, &sc, nil)
+	new(sqlx.Row).StructScan(&sc)
+	new(sqlx.Rows).StructScan(&sc)
+	new(sqlx.Stmt).Get(&sc)
+	new(sqlx.Stmt).GetContext(nil, &sc)
+	new(sqlx.Stmt).Select(&sc)
+	new(sqlx.Stmt).SelectContext(nil, &sc)
+	new(sqlx.Tx).Get(&sc, "")
+	new(sqlx.Tx).GetContext(nil, &sc, "")
+	new(sqlx.Tx).Select(&sc, "")
+	new(sqlx.Tx).SelectContext(nil, &sc, "")
 }
 
 func testCustom() {
