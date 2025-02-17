@@ -249,12 +249,10 @@ func implementsInterface(typ types.Type, ifaces []string, imports []*types.Packa
 
 	for _, ifacePath := range ifaces {
 		// e.g. "encoding/json.Marshaler" -> "encoding/json" + "Marshaler".
-		idx := strings.LastIndex(ifacePath, ".")
-		if idx == -1 {
+		pkgName, ifaceName, ok := strings.Cut(ifacePath, ".")
+		if !ok {
 			continue
 		}
-
-		pkgName, ifaceName := ifacePath[:idx], ifacePath[idx+1:]
 
 		scope, ok := findScope(pkgName)
 		if !ok {
