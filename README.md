@@ -89,6 +89,24 @@ The same can be done via the `-fn=<name:tag:arg-pos>` flag when using `musttag` 
 musttag -fn="github.com/hashicorp/hcl/v2/hclsimple.DecodeFile:hcl:2" ./...
 ```
 
+To report a custom function that works with a pointer to the struct, you need to add its description to `.golangci.yml`.
+The following is an example of adding support for [`validate.Struct`][12]:
+
+```yaml
+linters-settings:
+  musttag:
+    functions:
+      - name: (*github.com/go-playground/validator/v10.Validate).Struct
+        tag: validate
+        arg-pos: 0
+```
+
+The same can be done via the `-fn=<name:tag:arg-pos>` flag when using `musttag` standalone:
+
+```shell
+musttag -fn="(*github.com/go-playground/validator/v10.Validate).Struct:validate:0" ./...
+```
+
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
 [2]: https://pkg.go.dev/encoding/json
 [3]: https://pkg.go.dev/encoding/xml
@@ -100,3 +118,4 @@ musttag -fn="github.com/hashicorp/hcl/v2/hclsimple.DecodeFile:hcl:2" ./...
 [9]: https://github.com/go-simpler/musttag/releases
 [10]: https://golangci-lint.run/usage/linters/#musttag
 [11]: https://pkg.go.dev/github.com/hashicorp/hcl/v2/hclsimple#Decode
+[12]: https://pkg.go.dev/github.com/go-playground/validator/v10#Validate.Struct
