@@ -96,6 +96,12 @@ func testYAML() {
 	yaml.Unmarshal(nil, &m)
 	yaml.NewEncoder(nil).Encode(m)
 	yaml.NewDecoder(nil).Decode(&m)
+
+	var tm TextMarshaler
+	yaml.Marshal(tm)
+	yaml.Unmarshal(nil, &tm)
+	yaml.NewEncoder(nil).Encode(tm)
+	yaml.NewDecoder(nil).Decode(&tm)
 }
 
 func testTOML() {
