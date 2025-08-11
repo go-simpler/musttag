@@ -18,8 +18,9 @@ func TestAnalyzer(t *testing.T) {
 
 	t.Run("tests", func(t *testing.T) {
 		analyzer := New(
-			Func{Name: "example.com/custom.Marshal", Tag: "custom", ArgPos: 0},
-			Func{Name: "example.com/custom.Unmarshal", Tag: "custom", ArgPos: 1},
+			Func{Name: "example.com/custom.Function", Tag: "custom", ArgPos: 0},
+			Func{Name: "(example.com/custom.Struct).Method", Tag: "custom", ArgPos: 0},
+			Func{Name: "(example.com/custom.Interface).Method", Tag: "custom", ArgPos: 0},
 		)
 		analysistest.Run(t, testdata, analyzer, "tests")
 	})
