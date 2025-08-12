@@ -195,6 +195,7 @@ func testSQLX() {
 
 func testCustom() {
 	var st Struct
-	custom.Marshal(st)         // want "the given struct should be annotated with the `custom` tag"
-	custom.Unmarshal(nil, &st) // want "the given struct should be annotated with the `custom` tag"
+	custom.Function(st)                // want "the given struct should be annotated with the `custom` tag"
+	new(custom.Struct).Method(st)      // want "the given struct should be annotated with the `custom` tag"
+	(custom.Interface)(nil).Method(st) // want "the given struct should be annotated with the `custom` tag"
 }
