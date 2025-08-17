@@ -82,15 +82,15 @@ linters-settings:
         # The position of the argument to check.
         arg-pos: 2
 
-        # If the function is a pointer receiver method, use this format:
-      - name: (*github.com/go-playground/validator/v10.Validate).Struct
-        tag: validate
-        arg-pos: 0
-
-        # If the function is an interface method, use this format:
+        # If the function is a value-receiver method or an interface method, use this format:
       - name: (github.com/labstack/echo/v4.Context).JSON
         tag: json
         arg-pos: 1
+
+        # If the function is a pointer-receiver method, use this format:
+      - name: (*github.com/go-playground/validator/v10.Validate).Struct
+        tag: validate
+        arg-pos: 0
 ```
 
 The same can be done via the `-fn=<name:tag:arg-pos>` flag when using `musttag` standalone:
