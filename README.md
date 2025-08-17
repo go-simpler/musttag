@@ -96,7 +96,9 @@ linters-settings:
 The same can be done via the `-fn=<name:tag:arg-pos>` flag when using `musttag` standalone:
 
 ```shell
-musttag -fn="github.com/hashicorp/hcl/v2/hclsimple.DecodeFile:hcl:2" -fn="(*github.com/go-playground/validator/v10.Validate).Struct:validate:0" ./...
+musttag -fn="github.com/hashicorp/hcl/v2/hclsimple.DecodeFile:hcl:2" \
+    -fn="(github.com/labstack/echo/v4.Context).JSON:json:1" \
+    -fn="(*github.com/go-playground/validator/v10.Validate).Struct:validate:0" ./...
 ```
 
 [1]: https://github.com/uber-go/guide/blob/master/style.md#use-field-tags-in-marshaled-structs
