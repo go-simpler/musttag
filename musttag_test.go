@@ -1,41 +1,38 @@
-package musttag
+package musttag_test
 
 import (
 	"io"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"testing"
 
 	"go-simpler.org/assert"
 	. "go-simpler.org/assert/EF"
+	"go-simpler.org/musttag"
 	"golang.org/x/tools/go/analysis/analysistest"
 )
 
 func TestAnalyzer(t *testing.T) {
 	testdata := analysistest.TestData()
-	setupModules(t, testdata)
 
 	t.Run("tests", func(t *testing.T) {
-		analyzer := New(
-			Func{Name: "example.com/custom.Function", Tag: "custom", ArgPos: 0},
-			Func{Name: "(example.com/custom.Struct).Method", Tag: "custom", ArgPos: 0},
-			Func{Name: "(example.com/custom.Interface).Method", Tag: "custom", ArgPos: 0},
+		analyzer := musttag.New(
+			musttag.Func{Name: "example.com/custom.Function", Tag: "custom", ArgPos: 0},
+			musttag.Func{Name: "(example.com/custom.Struct).Method", Tag: "custom", ArgPos: 0},
+			musttag.Func{Name: "(example.com/custom.Interface).Method", Tag: "custom", ArgPos: 0},
 		)
-		analysistest.Run(t, testdata, analyzer, "tests")
+		analysistest.Run(t, testdata, analyzer, "testdata")
 	})
 
 	t.Run("bad Func.ArgPos", func(t *testing.T) {
-		analyzer := New(
-			Func{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
+		analyzer := musttag.New(
+			musttag.Func{Name: "encoding/json.Marshal", Tag: "json", ArgPos: 10},
 		)
-		err := analysistest.Run(nopT{}, testdata, analyzer, "tests")[0].Err
+		err := analysistest.Run(nopT{}, testdata, analyzer, "testdata")[0].Err
 		assert.Equal[E](t, err.Error(), "musttag: Func.ArgPos cannot be 10: encoding/json.Marshal accepts only 1 argument(s)")
 	})
 }
 
 func TestFlags(t *testing.T) {
-	analyzer := New()
+	analyzer := musttag.New()
 	analyzer.Flags.Usage = func() {}
 	analyzer.Flags.SetOutput(io.Discard)
 
@@ -58,15 +55,3 @@ func TestFlags(t *testing.T) {
 type nopT struct{}
 
 func (nopT) Errorf(string, ...any) {}
-
-// NOTE: analysistest does not yet support modules;
-// see https://github.com/golang/go/issues/37054 for details.
-func setupModules(t *testing.T, testdata string) {
-	t.Helper()
-
-	err := os.Chdir(filepath.Join(testdata, "src"))
-	assert.NoErr[F](t, err)
-
-	err = exec.Command("go", "work", "vendor").Run()
-	assert.NoErr[F](t, err)
-}
